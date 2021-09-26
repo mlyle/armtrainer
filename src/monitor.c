@@ -54,7 +54,7 @@ void SVCall_Handler(void)
 	);
 }
 
-DIOTag_t matrix_cols[] = {
+DIOTag_t matrix_outps[] = {
 	GPIOA_DIO(15),
 	GPIOA_DIO(12),
 	GPIOA_DIO(11),
@@ -63,45 +63,63 @@ DIOTag_t matrix_cols[] = {
 	GPIOA_DIO(8),
 };
 
-DIOTag_t matrix_rows[] = {
+DIOTag_t matrix_inps[] = {
 	GPIOB_DIO(6),
 	GPIOB_DIO(5),
 	GPIOB_DIO(4),
 	GPIOB_DIO(3),
 };
 
+int outp_statuses[NELEMENTS(matrix_outps)];
+
 void matrix_scanstep()
 {
-	static int curCol = 0;
+	static int cur_outp = 0;
 
-	// XXX read current key
-	for (int i=0; i<NELEMENTS(matrix_rows); i++) {
-		// XXX
+	int inp_mask = 1;
+
+	int outp_stat = outp_statuses[cur_outp];
+
+	for (int i=0; i<NELEMENTS(matrix_inps); i++) {
+		bool pin = DIORead(matrix_inps[i]);
+
+		bool old_status = !!(outp_stat & inp_mask);
+
+		if (old_status != pin) {
+			if (pin) {
+				// XXX state change notif
+				outp_stat |= inp_mask;
+			} else {
+				// XXX state change notif
+				outp_stat &= ~inp_mask;
+			}
+		}
 	}
 
-	// disable current col output
-	DIOSetInput(matrix_cols[curCol], DIO_PULL_DOWN);
+	outp_statuses[cur_outp] = outp_stat;
+
+	// disable current output
+	DIOSetInput(matrix_outps[cur_outp], DIO_PULL_DOWN);
 
 	// increment curCol, wrapping around
-	curCol++;
-	if (curCol > NELEMENTS(matrix_cols)) {
-		curCol = 0;
+	if ((++cur_outp) > NELEMENTS(matrix_outps)) {
+		cur_outp = 0;
 	}
 
 	// set new current col as output high
-	DIOSetOutput(matrix_cols[curCol], false, DIO_DRIVE_LIGHT, true);
+	DIOSetOutput(matrix_outps[cur_outp], false, DIO_DRIVE_LIGHT, true);
 }
 
 void matrix_init()
 {
 	/* Cols are OUTPUT HIGH or input pulldown; initially input */
-	for (int i=0; i<NELEMENTS(matrix_cols); i++) {
-		DIOSetInput(matrix_cols[i], DIO_PULL_DOWN);
+	for (int i=0; i<NELEMENTS(matrix_outps); i++) {
+		DIOSetInput(matrix_outps[i], DIO_PULL_DOWN);
 	}
 
 	/* Rows are input pulldown */
-	for (int i=0; i<NELEMENTS(matrix_rows); i++) {
-		DIOSetInput(matrix_rows[i], DIO_PULL_DOWN);
+	for (int i=0; i<NELEMENTS(matrix_inps); i++) {
+		DIOSetInput(matrix_inps[i], DIO_PULL_DOWN);
 	}
 }
 
