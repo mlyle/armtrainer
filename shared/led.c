@@ -5,7 +5,7 @@
 static GPIO_TypeDef *led_gpio;
 static uint16_t led_pin;
 static bool led_sense;
-static int led_time_per_dot = 36;
+static int led_time_per_dot = 27;
 
 void led_toggle()
 {

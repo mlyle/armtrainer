@@ -71,7 +71,8 @@ void _start(void)
 	__builtin_unreachable();
 }
 
-// XXX SVCALL
+void SVCall_Handler() __attribute__((weak));
+
 /* This ends one early, so other code can provide systick handler */
 const void *_vectors[] __attribute((section(".vectors"))) =
 {
@@ -86,7 +87,7 @@ const void *_vectors[] __attribute((section(".vectors"))) =
 	0,
 	0,
 	0,
-	0,      /* SVCall */
+	SVCall_Handler,      /* SVCall */
 	0,      /* Reserved for debug */
 	0,      /* Reserved */
 	0,      /* PendSV */
