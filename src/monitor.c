@@ -34,7 +34,8 @@ struct __attribute__((packed)) ContextStateFrame_s {
 };
 
 void delay_ms(uint32_t ms) {
-
+	/* XXX could true this up with a calibrated delay loop */
+	/* XXX or looking at the systick underlying counter.. */
 	uint32_t next = systick_cnt + (ms / 5) + 1;
 
 	while (systick_cnt < next);
@@ -54,6 +55,21 @@ void SVCall_Handler(void)
 	);
 }
 
+void DebugMon_Handler() __attribute__((interrupt("IRQ")));
+
+__attribute__((naked))
+void DebugMon_Handler(void)
+{
+	__asm volatile(
+			"tst lr, #4 \n"
+			"ite eq \n"
+			"mrseq r0, msp \n"
+			"mrsne r0, psp \n"
+			"b DebugMon_Handler_c \n");
+}
+
+
+
 DIOTag_t matrix_outps[] = {
 	GPIOA_DIO(15),
 	GPIOA_DIO(12),
@@ -72,6 +88,10 @@ DIOTag_t matrix_inps[] = {
 
 int outp_statuses[NELEMENTS(matrix_outps)];
 
+void matrix_key_changed(int key_num, bool pressed)
+{
+}
+
 void matrix_scanstep()
 {
 	static int cur_outp = 0;
@@ -86,11 +106,13 @@ void matrix_scanstep()
 		bool old_status = !!(outp_stat & inp_mask);
 
 		if (old_status != pin) {
+			matrix_key_changed(
+					cur_outp * NELEMENTS(matrix_inps) + i,
+					pin);
+
 			if (pin) {
-				// XXX state change notif
 				outp_stat |= inp_mask;
 			} else {
-				// XXX state change notif
 				outp_stat &= ~inp_mask;
 			}
 		}
@@ -123,6 +145,25 @@ void matrix_init()
 	}
 }
 
+void DelayLoop(uint32_t len)
+{
+	while (len--) {
+		asm volatile("NOP\n");
+	}
+}
+
+void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
+{
+	if ((frame->return_address & 0x2FFF0000) != 0x20000000) {
+		return;
+	}
+
+	led_set(1);
+	DelayLoop( 100000);
+	led_set(0);
+	DelayLoop(7000000);	/* Delay half a second per insn or so */
+}
+
 void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 {
 	uint8_t *call = (uint8_t *) (frame->return_address - 2);
@@ -137,6 +178,19 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 		case 0x02:		/* Turn on LED */
 			led_set(1);
 			break;
+		case 0x03:		/* Blink R0 times */
+			led_set(0);
+			delay_ms(500);
+			for (int i = 0; i < frame->r0; i++) {
+				led_set(1);
+				delay_ms(300);
+				led_set(0);
+				delay_ms(120);
+			}
+
+			delay_ms(600);
+			break;
+
 		case 0x10:		/* Delay in milliseconds specified by R0 */
 			delay_ms(frame->r0);
 			break;
@@ -151,6 +205,19 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			}
 
 			break;
+
+		case 0x20:
+			break;		/* XXX: clear top half of screen, position
+					   cursor at 0,0 */
+		case 0x21:		/* XXX: output number in R0 to screen + newline */
+			break;
+		case 0x22:		/* XXX: output character in R0 to screen */
+			break;
+		case 0x23:		/* XXX: draw white dot at (R0, R1) */
+			break;
+		case 0x24:		/* XXX: draw dot of color (R2, R3, R4) at (R0, R1) */
+			break;
+
 		default:
 			break;
 	}
@@ -177,6 +244,7 @@ uint16_t myprog[] =
 	};
 #endif
 
+#if 0
 uint16_t myprog[] =
 	{
 		0xdf00,			/* syscall 0x00: toggle LED */
@@ -184,6 +252,19 @@ uint16_t myprog[] =
 		0xdf11,			/* syscall 0x11: Delay r0 (0.4s) */
 		0xe7fb,			/* go back to the first syscall */
 	};
+#endif
+
+uint16_t myprog[] =
+	{
+		0x2001,			/* R0 = 1 */
+		0x2101,			/* R1 = 1 */
+		0xdf03,			/* LOOPBEGIN: Syscall: Blink R0 times */
+		0x180A,			/* R2 = R0 + R1 */
+		0x4608,			/* R0=R1 */
+		0x4611,			/* R1=R2 */
+		0xe7fa,			/* Goto 4 instructions before this one */
+	};
+
 
 
 #if 0
@@ -191,6 +272,12 @@ void SVCall_Handler_c() {
 	led_toggle();
 }
 #endif
+
+void EnableSingleStep() {
+	CoreDebug->DEMCR = CoreDebug_DEMCR_MON_EN_Msk |
+		CoreDebug_DEMCR_TRCENA_Msk |
+		CoreDebug_DEMCR_MON_STEP_Msk;
+}
 
 void GoTo(uintptr_t addr) {
 	asm volatile("MOV PC, %[addr]\n" : : [addr]"r"(addr) );
@@ -272,23 +359,14 @@ int main() {
 
 	led_init_pin(GPIOC, GPIO_Pin_13, true);
 
-#if 0
 	if (osc_err) {
 		led_panic("oscfail");
 	}
 
+#if 0
 	led_panic("ohno");
 #endif
 
-#if 0
-	while (true) {
-		for (int i=0; i<10000000; i++) {
-			asm volatile ("nop"::);
-		}
-
-		asm volatile ("SVC 4");
-	}
-#endif
-
+	EnableSingleStep();
 	GoTo((uintptr_t)myprog);
 }
