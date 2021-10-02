@@ -192,14 +192,14 @@ static inline void DIOHigh(DIOTag_t t)
 {
 	_DIO_PRELUDE;
 
-	gp->BSRRH = pin;
+	gp->BSRRL = pin;
 }
 
 static inline void DIOLow(DIOTag_t t)
 {
 	_DIO_PRELUDE;
 
-	gp->BSRRL = pin;
+	gp->BSRRH = pin;
 }
 
 static inline void DIOWrite(DIOTag_t t, bool high)
