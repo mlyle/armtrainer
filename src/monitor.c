@@ -407,7 +407,6 @@ void lcd_init()
 	lcd_send_data_bulk(255, 10240);
 	lcd_send_data_bulk(0, 10240);
 
-	uint8_t (*raster)[13] = &font_8x13_rasters[0x26];
 
 	lcd_send_command(0x2a);
 	lcd_send_data(0);
@@ -423,20 +422,21 @@ void lcd_init()
 	lcd_send_command(0x2c);
 
 	for (int k=0; k<5; k++) {
-	for (int i = 12 ; i > 0; i--) {
-		uint8_t tmp = (*raster)[i];
-		for (int j = 0 ; j < 8; j++) {
-			if (tmp & 0x80) {
-				lcd_send_data(255);
-				lcd_send_data(255);
-			} else {
-				lcd_send_data(0);
-				lcd_send_data(0);
-			}
+		uint8_t (*raster)[13] = &font_8x13_rasters[0x26 + k * 2];
+		for (int i = 12 ; i > 0; i--) {
+			uint8_t tmp = (*raster)[i];
+			for (int j = 0 ; j < 8; j++) {
+				if (tmp & 0x80) {
+					lcd_send_data(255);
+					lcd_send_data(255);
+				} else {
+					lcd_send_data(0);
+					lcd_send_data(0);
+				}
 
-			tmp <<= 1;
+				tmp <<= 1;
+			}
 		}
-	}
 	}
 }
 
