@@ -1,17 +1,16 @@
-#define STM32F4XX
-
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <led.h>
+#include <lcdutil.h>
 
 #include <armdio.h>
 
 #include <stm32f4xx_rcc.h>
 #include <systick_handler.h>
 
-#include "font8x13.h"
+#include <delayutil.h>
 
 #ifndef MIN
 #define MIN(a,b) \
@@ -35,15 +34,6 @@ struct __attribute__((packed)) ContextStateFrame_s {
 	uint32_t xpsr;
 };
 
-void delay_ms(uint32_t ms) {
-	/* XXX could true this up with a calibrated delay loop */
-	/* XXX or looking at the systick underlying counter.. */
-	uint32_t next = systick_cnt + (ms / 5) + 1;
-
-	while (systick_cnt < next);
-}
-
-void SVCall_Handler() __attribute__((interrupt("SWI")));
 
 __attribute__((naked))
 void SVCall_Handler(void)
@@ -88,19 +78,52 @@ DIOTag_t matrix_inps[] = {
 	GPIOB_DIO(3),
 };
 
-int outp_statuses[NELEMENTS(matrix_outps)];
+uint8_t outp_statuses[NELEMENTS(matrix_outps)];
+
+enum matrix_keys {
+	key_0 = '0',
+	key_1, key_2, key_3, key_4, key_5, key_6, key_7, key_8, key_9,
+	key_a = 'a',
+	key_b, key_c, key_d, key_e, key_f,
+	key_load = 'L', key_store = 'S', key_addr = 'A',
+	key_clr = '<', key_step = '.', key_run = 'G',
+	key_invalid = 'x'
+};
+
+/* This is the keymap rotated 90 degrees CCW */
+static const enum matrix_keys keymap[NELEMENTS(matrix_inps) * NELEMENTS(matrix_outps)] = {
+	key_0, key_4, key_8, key_c,
+	key_1, key_5, key_9, key_d,
+	key_2, key_6, key_a, key_e,
+	key_3, key_7, key_b, key_f,
+	key_load, key_store, key_addr, key_clr,
+	key_run, key_step, key_invalid, key_invalid
+};
 
 void matrix_key_changed(int key_num, bool pressed)
 {
+	static uint8_t horiz_pos = 0;
+
+	enum matrix_keys key = keymap[key_num];
+	if (pressed) {
+		lcd_blit_char(key, horiz_pos, 113, 15, 0, 0, 0, 0, 0);
+	} else {
+		lcd_blit_char(key, horiz_pos, 113, 0, 0, 15, 0, 0, 0);
+	}
+
+	horiz_pos += 9;
+	if (horiz_pos > 144) {
+		horiz_pos = 0;
+	}
 }
 
 void matrix_scanstep()
 {
 	static int cur_outp = 0;
 
-	int inp_mask = 1;
+	uint8_t inp_mask = 1;
 
-	int outp_stat = outp_statuses[cur_outp];
+	uint8_t outp_stat = outp_statuses[cur_outp];
 
 	for (int i=0; i<NELEMENTS(matrix_inps); i++) {
 		bool pin = DIORead(matrix_inps[i]);
@@ -118,6 +141,7 @@ void matrix_scanstep()
 				outp_stat &= ~inp_mask;
 			}
 		}
+		inp_mask <<= 1;
 	}
 
 	outp_statuses[cur_outp] = outp_stat;
@@ -126,12 +150,15 @@ void matrix_scanstep()
 	DIOSetInput(matrix_outps[cur_outp], DIO_PULL_DOWN);
 
 	// increment curCol, wrapping around
-	if ((++cur_outp) > NELEMENTS(matrix_outps)) {
+	cur_outp++;
+
+	if ((cur_outp) >= NELEMENTS(matrix_outps)) {
 		cur_outp = 0;
 	}
 
 	// set new current col as output high
 	DIOSetOutput(matrix_outps[cur_outp], false, DIO_DRIVE_LIGHT, true);
+	delay_loop(100);
 }
 
 void matrix_init()
@@ -144,13 +171,6 @@ void matrix_init()
 	/* Rows are input pulldown */
 	for (int i=0; i<NELEMENTS(matrix_inps); i++) {
 		DIOSetInput(matrix_inps[i], DIO_PULL_DOWN);
-	}
-}
-
-void delay_loop(uint32_t len)
-{
-	while (len--) {
-		asm volatile("NOP\n");
 	}
 }
 
@@ -287,158 +307,6 @@ void GoTo(uintptr_t addr)
 	asm volatile("MOV PC, %[addr]\n" : : [addr]"r"(addr) );
 }
 
-DIOTag_t lcd_rst = GPIOC_DIO(15);
-DIOTag_t lcd_cs = GPIOB_DIO(9);
-DIOTag_t lcd_a0 = GPIOC_DIO(14);
-DIOTag_t lcd_mosi = GPIOB_DIO(15); // AF05
-DIOTag_t lcd_sck = GPIOB_DIO(13);  // AF05
-SPI_TypeDef *lcd_spi = SPI2;
-
-void lcd_send_command(uint8_t cmd)
-{
-	delay_loop(100);
-	DIOLow(lcd_a0);	// Low for command
-	delay_loop(100);
-	DIOLow(lcd_cs);
-	delay_loop(100);
-	lcd_spi->DR = cmd; // send SPI
-
-	// and wait for completion
-	while (!(lcd_spi->SR & SPI_SR_TXE));
-	while ((lcd_spi->SR & SPI_SR_BSY));
-
-	delay_loop(100);
-	DIOHigh(lcd_cs);
-}
-
-void lcd_send_data(uint8_t data)
-{
-	delay_loop(100);
-	DIOHigh(lcd_a0);
-	delay_loop(100);
-	DIOLow(lcd_cs);
-	delay_loop(100);
-	lcd_spi->DR = data; // send SPI
-
-	// and wait for completion
-	while (!(lcd_spi->SR & SPI_SR_TXE));
-	while ((lcd_spi->SR & SPI_SR_BSY));
-	delay_loop(100);
-	DIOHigh(lcd_cs);
-}
-
-void lcd_send_data_bulk(uint8_t data, int len)
-{
-	delay_loop(100);
-	DIOHigh(lcd_a0);
-	delay_loop(100);
-	DIOLow(lcd_cs);
-	delay_loop(100);
-	for (int i = 0; i< len; i++) {
-		lcd_spi->DR = data; // send SPI
-
-		// and wait for completion
-		while (!(lcd_spi->SR & SPI_SR_TXE));
-		while ((lcd_spi->SR & SPI_SR_BSY));
-	}
-	delay_loop(100);
-	DIOHigh(lcd_cs);
-}
-
-void lcd_init()
-{
-	// Initially, in reset.
-	DIOSetOutput(lcd_rst, false, DIO_DRIVE_STRONG, false);
-	DIOSetOutput(lcd_cs, false, DIO_DRIVE_STRONG, true); // XXX not selected, right?
-	DIOSetOutput(lcd_a0, false, DIO_DRIVE_WEAK, true);
-	DIOSetAltfuncOutput(lcd_mosi, 5, false, DIO_DRIVE_STRONG);
-	DIOSetAltfuncOutput(lcd_sck, 5, false, DIO_DRIVE_STRONG);
-
-	// XXX PB14 MISO, PB12 SDCS
-
-	// XXX Configure SPI
-	
-
-	lcd_spi->CR1 = SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL |
-		(1 << 3 /*SPI_CR1_BR_Pos*/);
-	lcd_spi->CR2 = 0;
-	lcd_spi->CR1 = SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL |
-		(1 << 3 /*SPI_CR1_BR_Pos*/) | SPI_CR1_SPE;
-
-	// After 50ms, exit reset
-	delay_ms(50);
-	DIOHigh(lcd_rst);
-
-	delay_ms(100);
-
-	lcd_send_command(0x11);		// Sleep out command
-	delay_ms(220);
-
-	lcd_send_command(0x20);		// set noninverted
-
-	// orientation??  [cmd:]0x36 [data]???
-	lcd_send_command(0x36);
-	lcd_send_data(0x60);
-	
-	lcd_send_command(0x3a);
-	//lcd_send_data(0x03);		// selects reduced 4/4/4 data XXX
-	lcd_send_data(0x05);		// selects 5/6/5 16 bit color
-
-	lcd_send_command(0x29);
-
-	lcd_send_command(0x2a);
-	lcd_send_data(0);
-	lcd_send_data(0);
-	lcd_send_data(0);
-	lcd_send_data(159);
-
-	lcd_send_command(0x2b);
-	lcd_send_data(0);
-	lcd_send_data(0);
-	lcd_send_data(0);
-	lcd_send_data(127);
-
-	lcd_send_command(0x2c);
-	for (int i = 0; i < 32; i++)  {
-		lcd_send_data_bulk(33, 320);
-		lcd_send_data_bulk(11, 320);
-	}
-
-	lcd_send_data_bulk(255, 10240);
-	lcd_send_data_bulk(0, 10240);
-
-
-	lcd_send_command(0x2a);
-	lcd_send_data(0);
-	lcd_send_data(10);
-	lcd_send_data(0);
-	lcd_send_data(17);
-
-	lcd_send_command(0x2b);
-	lcd_send_data(0);
-	lcd_send_data(63);
-	lcd_send_data(0);
-	lcd_send_data(127);
-	lcd_send_command(0x2c);
-
-	for (int k=0; k<5; k++) {
-		uint8_t (*raster)[13] = &font_8x13_rasters[0x26 + k * 2];
-		for (int i = 12 ; i > 0; i--) {
-			uint8_t tmp = (*raster)[i];
-			for (int j = 0 ; j < 8; j++) {
-				if (tmp & 0x80) {
-					lcd_send_data(255);
-					lcd_send_data(255);
-				} else {
-					lcd_send_data(0);
-					lcd_send_data(0);
-				}
-
-				tmp <<= 1;
-			}
-		}
-	}
-}
 
 int main() {
 	RCC_DeInit();
@@ -529,6 +397,11 @@ int main() {
 #endif
 
 	lcd_init();
+	matrix_init();
+
+	while(1) {
+		matrix_scanstep();
+	}
 
 	EnableSingleStep();
 	GoTo((uintptr_t)myprog);

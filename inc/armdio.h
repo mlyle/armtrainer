@@ -5,6 +5,9 @@
 #include <stdbool.h>
 
 #if defined(STM32F4XX)
+#include <stm32f4xx.h>
+#include <stm32f4xx_gpio.h>
+
 enum DIODriveStr {
 	DIO_DRIVE_WEAK = 0,
 	DIO_DRIVE_LIGHT,

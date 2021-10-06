@@ -40,7 +40,7 @@ endif
 CC := $(CCACHE_BIN) $(ARM_SDK_PREFIX)gcc
 
 CPPFLAGS += $(patsubst %,-I%,$(INC))
-CPPFLAGS += -DSTM32F401xx -DUSE_STDPERIPH_DRIVER
+CPPFLAGS += -DSTM32F401xx -DSTM32F4XX -DUSE_STDPERIPH_DRIVER
 
 CFLAGS :=
 CFLAGS += -mcpu=cortex-m4 -mthumb -fdata-sections -ffunction-sections
