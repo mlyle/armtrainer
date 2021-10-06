@@ -174,11 +174,76 @@ void matrix_init()
 	}
 }
 
+static inline char to_hexdigit(uint8_t d)
+{
+	if (d < 10) {
+		return '0' + d;
+	}
+
+	if (d < 16) {
+		return d-10 + 'A';
+	}
+
+	return 0;
+}
+
+static char *to_hex32(uint32_t ptr)
+{
+	static char buffer[9];
+	buffer[8] = 0;
+
+	for (int i=7; i>=0; i--) {
+		buffer[i] = to_hexdigit(ptr & 0xf);
+		ptr >>= 4;
+	}
+
+	return buffer;
+}
+
+static char *to_hex16(uint16_t val)
+{
+	static char buffer[5];
+	buffer[4] = 0;
+
+	for (int i=3; i>=0; i--) {
+		buffer[i] = to_hexdigit(val & 0xf);
+		val >>= 4;
+	}
+
+	return buffer;
+}
+
 void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 {
 	if ((frame->return_address & 0x2FFF0000) != 0x20000000) {
 		return;
 	}
+
+	static bool skip_next = false;
+
+	if (skip_next == true) {
+		skip_next = false;
+		return;
+	}
+
+	uint8_t *firstbyte = (uint8_t *) (frame->return_address + 1);
+	if (*firstbyte == 0xdf) {
+		skip_next = true;
+		/* Skip return from syscall */
+	}
+
+	char *addr = to_hex32(frame->return_address);
+
+	lcd_blit_string(addr, 0, 0, 0, 0, 0, 15, 15, 15);
+
+	uint16_t *insn = (uint16_t *) frame->return_address;
+	char *inshex = to_hex16(*insn);
+	lcd_blit_string(inshex, 80, 0, 0, 0, 0, 8, 8, 15);
+
+	static uint32_t counter = 0;
+
+	char *counterstr = to_hex32(counter++);
+	lcd_blit_string(counterstr, 0, 14, 0, 0, 0, 15, 8, 4);
 
 	led_set(1);
 	delay_loop( 100000);
@@ -399,9 +464,11 @@ int main() {
 	lcd_init();
 	matrix_init();
 
+#if 0
 	while(1) {
 		matrix_scanstep();
 	}
+#endif
 
 	EnableSingleStep();
 	GoTo((uintptr_t)myprog);

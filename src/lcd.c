@@ -10,9 +10,6 @@ static DIOTag_t lcd_mosi = GPIOB_DIO(15); // AF05
 static DIOTag_t lcd_sck = GPIOB_DIO(13);  // AF05
 static SPI_TypeDef *lcd_spi = SPI2;
 
-void lcd_blit_char(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
-		uint8_t bgr, uint8_t bgg, uint8_t bgb);
-
 static inline void lcd_send_data_bulk(uint8_t *data, int len);
 
 static uint8_t lcd_fbuf[160*128*3/2];
@@ -71,10 +68,10 @@ static inline void lcd_send_data_bulk(uint8_t *data, int len)
 static inline void lcd_blit(int x, int y, uint8_t r, uint8_t g, uint8_t b)
 {
 	int addr = y * 160 + x;
-	/* 1,0 = 1; 3,0 = 3 */
+	/* 1,0 = 1; 2,0 = 2   3,0 = 3 */
 	addr *= 3;
 	addr /= 2;
-	/* 1    4 */
+	/* 1 3   4 */
 
 	if (x % 2) {
 		lcd_fbuf[addr] = (lcd_fbuf[addr] & 0xf0) | r;
@@ -85,7 +82,7 @@ static inline void lcd_blit(int x, int y, uint8_t r, uint8_t g, uint8_t b)
 	}
 }
 
-void lcd_blit_char(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
+static void lcd_blit_char_internal(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 		uint8_t bgr, uint8_t bgg, uint8_t bgb)
 {
 	/* XXX enforce range */
@@ -105,7 +102,24 @@ void lcd_blit_char(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 		}
 		y++;
 	}
-	/* XXX */
+}
+
+void lcd_blit_char(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
+		uint8_t bgr, uint8_t bgg, uint8_t bgb)
+{
+	lcd_blit_char_internal(c, x, y, r, g, b, bgr, bgg, bgb);
+
+	/* XXX crummy refresh behavior here, but adequate for now */
+
+	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
+}
+
+void lcd_blit_string(char *str, int x, int y, uint8_t r, uint8_t g, uint8_t b,
+		uint8_t bgr, uint8_t bgg, uint8_t bgb) {
+	while ((*str) && (x < 144)) {
+		lcd_blit_char_internal(*str, x, y, r, g, b, bgr, bgg, bgb);
+		str++; x+=9;
+	}
 
 	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
 }
