@@ -284,16 +284,5 @@ void lcd_init()
 		}
 	}
 
-	lcd_blit_char('m', 0, 80, 15, 0, 0, 0, 0, 0); 
-	lcd_blit_char('p', 9, 80, 0, 15, 0, 0, 0, 0); 
-	lcd_blit_char('l', 18, 80, 0, 0, 15, 0, 0, 0); 
-	lcd_blit_char('2', 27, 80, 8, 0, 0, 15, 15, 15); 
-	lcd_blit_char('0', 36, 80, 0, 8, 0, 15,15,15); 
-	lcd_blit_char('2', 45, 80, 0, 0, 8, 15,15,15); 
-	lcd_blit_char('1', 54, 80, 0, 0, 0, 15,15,15); 
-
-	lcd_blit_char(';', 60, 100, 1, 1, 15, 0, 0, 0); 
-	lcd_blit_char(')', 69, 100, 15, 1, 1, 0, 0, 0); 
-
 	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
 }

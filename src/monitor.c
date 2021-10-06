@@ -24,10 +24,13 @@ static bool osc_err = false;
 #define NELEMENTS(x) (sizeof(x) / sizeof(*(x)))
 
 struct __attribute__((packed)) ContextStateFrame_s {
+	uint32_t r[4];
+#if 0
 	uint32_t r0;
 	uint32_t r1;
 	uint32_t r2;
 	uint32_t r3;
+#endif
 	uint32_t r12;
 	uint32_t lr;
 	uint32_t return_address;
@@ -234,16 +237,19 @@ void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 
 	char *addr = to_hex32(frame->return_address);
 
-	lcd_blit_string(addr, 0, 0, 0, 0, 0, 15, 15, 15);
+	lcd_blit_string(addr, 0, 114, 0, 0, 0, 15, 15, 15);
 
 	uint16_t *insn = (uint16_t *) frame->return_address;
 	char *inshex = to_hex16(*insn);
-	lcd_blit_string(inshex, 80, 0, 0, 0, 0, 8, 8, 15);
+	lcd_blit_string(inshex, 72, 114, 0, 0, 0, 8, 8, 15);
 
-	static uint32_t counter = 0;
+	for (int i=0; i<4; i++) {
+		char regn[3]={ 'r', '0'+i, '\0' };
+		char *reg_val = to_hex32(frame->r[i]);
 
-	char *counterstr = to_hex32(counter++);
-	lcd_blit_string(counterstr, 0, 14, 0, 0, 0, 15, 8, 4);
+		lcd_blit_string(regn, 0, 62+i*13, 15, 2, 2, 0, 0, 0);
+		lcd_blit_string(reg_val, 24, 62+i*13, 15, 15, 15, 5, 0 ,0);
+	}
 
 	led_set(1);
 	delay_loop( 100000);
@@ -268,7 +274,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 		case 0x03:		/* Blink R0 times */
 			led_set(0);
 			delay_ms(500);
-			for (int i = 0; i < frame->r0; i++) {
+			for (int i = 0; i < frame->r[0]; i++) {
 				led_set(1);
 				delay_ms(300);
 				led_set(0);
@@ -279,15 +285,15 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			break;
 
 		case 0x10:		/* Delay in milliseconds specified by R0 */
-			delay_ms(frame->r0);
+			delay_ms(frame->r[0]);
 			break;
 		case 0x11:		/* Delay R0 tenths of second */
 			/* (These variants are useful because one can only load 8 bit
 			 * immediates with 16 bit thumb instructions */
-			delay_ms(frame->r0 * 100);
+			delay_ms(frame->r[0] * 100);
 			break;
 		case 0x12:		/* Delay R0 seconds */
-			for (uint32_t i=0; i < frame->r0; i++) {
+			for (uint32_t i=0; i < frame->r[0]; i++) {
 				delay_ms(1000);
 			}
 
@@ -302,7 +308,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			break;
 		case 0x23:		/* XXX: draw white dot at (R0, R1) */
 			break;
-		case 0x24:		/* XXX: draw dot of color (R2, R3, R4) at (R0, R1) */
+		case 0x24:		/* XXX: draw black dot at (R0, R1) */
 			break;
 
 		default:
