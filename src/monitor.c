@@ -216,6 +216,54 @@ static char *to_hex16(uint16_t val)
 	return buffer;
 }
 
+struct instructions {
+	uint16_t mask;
+	uint16_t val;
+	char mnem[5];	/* with null */
+} insn_list[] = {
+	{ 0xf800, 0x3000, "ADDi" }, // 00110b
+	{ 0xfe00, 0x1800, "ADDr" }, // 0001100
+	{ 0xf800, 0xe000, "B   " },    // 11100b
+	{ 0xff00, 0xdf00, "SYSc" },	// 11011111b
+	{ 0xf800, 0x2000, "MOVi" }, 	// 00100b
+	{ 0xff00, 0x4600, "MOVr" },	// 0100 0110b
+	{ 0, 0, "" }
+};
+
+
+static inline void blit_addrval(uint32_t addr)
+{
+	char *addrhex = to_hex32(addr);
+
+	lcd_blit_string(addrhex, 0, 114, 0, 0, 0, 15, 15, 15);
+
+	uint16_t *insn = (uint16_t *) addr;
+	char *inshex = to_hex16(*insn);
+	lcd_blit_string(inshex, 72, 114, 0, 0, 0, 8, 8, 15);
+
+	char *mnem="????";
+
+	for (int i = 0; insn_list[i].mask; i++) {
+		if ((*insn & insn_list[i].mask) == insn_list[i].val) {
+			mnem = insn_list[i].mnem;
+			break;
+		}
+	}
+
+	lcd_blit_string(mnem, 123, 114, 15, 15, 15, 0, 0, 0);
+}
+
+static inline void blit_registers(struct ContextStateFrame_s *frame)
+{
+	for (int i=0; i<4; i++) {
+		char regn[3]={ 'r', '0'+i, '\0' };
+		char *reg_val = to_hex32(frame->r[i]);
+
+		lcd_blit_string(regn, 0, 62+i*13, 15, 2, 2, 0, 0, 0);
+		lcd_blit_string(reg_val, 24, 62+i*13, 15, 15, 15, 5, 0 ,0);
+	}
+}
+
 void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 {
 	if ((frame->return_address & 0x2FFF0000) != 0x20000000) {
@@ -235,21 +283,8 @@ void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 		/* Skip return from syscall */
 	}
 
-	char *addr = to_hex32(frame->return_address);
-
-	lcd_blit_string(addr, 0, 114, 0, 0, 0, 15, 15, 15);
-
-	uint16_t *insn = (uint16_t *) frame->return_address;
-	char *inshex = to_hex16(*insn);
-	lcd_blit_string(inshex, 72, 114, 0, 0, 0, 8, 8, 15);
-
-	for (int i=0; i<4; i++) {
-		char regn[3]={ 'r', '0'+i, '\0' };
-		char *reg_val = to_hex32(frame->r[i]);
-
-		lcd_blit_string(regn, 0, 62+i*13, 15, 2, 2, 0, 0, 0);
-		lcd_blit_string(reg_val, 24, 62+i*13, 15, 15, 15, 5, 0 ,0);
-	}
+	blit_addrval(frame->return_address);
+	blit_registers(frame);
 
 	led_set(1);
 	delay_loop( 100000);
@@ -302,7 +337,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 		case 0x20:
 			break;		/* XXX: clear top half of screen, position
 					   cursor at 0,0 */
-		case 0x21:		/* XXX: output number in R0 to screen + newline */
+		case 0x21:		/* XXX: output number in R0 to screen, as denary, newline */
 			break;
 		case 0x22:		/* XXX: output character in R0 to screen */
 			break;
