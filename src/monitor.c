@@ -64,8 +64,15 @@ void DebugMon_Handler(void)
 			"b DebugMon_Handler_c \n");
 }
 
+enum progrun_state {
+	STATE_STOPPED,
+	STATE_STEP,
+	STATE_RUN
+} prog_state;
+
 void matrix_key_changed(enum matrix_keys key, bool pressed)
 {
+#if 0
 	static uint8_t horiz_pos = 0;
 
 	if (pressed) {
@@ -77,6 +84,24 @@ void matrix_key_changed(enum matrix_keys key, bool pressed)
 	horiz_pos += 9;
 	if (horiz_pos > 144) {
 		horiz_pos = 0;
+	}
+#endif
+	if (pressed) {
+		switch (key) {
+			case key_run:
+				if (prog_state != STATE_RUN) {
+					prog_state = STATE_RUN;
+				} else {
+					prog_state = STATE_STOPPED;
+				}
+				break;
+			case key_step:
+				prog_state = STATE_STEP;
+				break;
+			default:
+				/* Ignore all other keys for now */
+				break;
+		};
 	}
 }
 
@@ -138,11 +163,11 @@ static inline void blit_addrval(uint32_t addr)
 {
 	char *addrhex = to_hex32(addr);
 
-	lcd_blit_string(addrhex, 0, 114, 0, 0, 0, 15, 15, 15);
+	lcd_blit_string(addrhex, 0, 112, 0, 0, 0, 15, 15, 15);
 
 	uint16_t *insn = (uint16_t *) addr;
 	char *inshex = to_hex16(*insn);
-	lcd_blit_string(inshex, 72, 114, 0, 0, 0, 8, 8, 15);
+	lcd_blit_string(inshex, 72, 112, 0, 0, 0, 8, 8, 15);
 
 	char *mnem="????";
 
@@ -153,7 +178,14 @@ static inline void blit_addrval(uint32_t addr)
 		}
 	}
 
-	lcd_blit_string(mnem, 123, 114, 15, 15, 15, 0, 0, 0);
+	lcd_blit_string(mnem, 123, 112, 15, 15, 15, 0, 0, 0);
+
+	lcd_blit_horiz(0, 125, 159, 0, 0, 0);
+	lcd_blit_horiz(0, 126, 159, 0, 0, 0);
+	lcd_blit_horiz(0, 127, 159, 0, 0, 0);
+	lcd_blit_horiz(13, 125, 13, 15, 0, 0);
+	lcd_blit_horiz(11, 126, 15, 15, 0, 0);
+	lcd_blit_horiz(9, 127, 17, 15, 0, 0);
 }
 
 static inline void blit_registers(struct ContextStateFrame_s *frame)
@@ -162,8 +194,8 @@ static inline void blit_registers(struct ContextStateFrame_s *frame)
 		char regn[3]={ 'r', '0'+i, '\0' };
 		char *reg_val = to_hex32(frame->r[i]);
 
-		lcd_blit_string(regn, 0, 62+i*13, 15, 2, 2, 0, 0, 0);
-		lcd_blit_string(reg_val, 24, 62+i*13, 15, 15, 15, 5, 0 ,0);
+		lcd_blit_string(regn, 0, 60+i*13, 15, 2, 2, 0, 0, 0);
+		lcd_blit_string(reg_val, 24, 60+i*13, 15, 15, 15, 5, 0 ,0);
 	}
 }
 
@@ -188,11 +220,15 @@ void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 
 	blit_addrval(frame->return_address);
 	blit_registers(frame);
+	lcd_refresh();
 
-	led_set(1);
-	delay_loop( 100000);
-	led_set(0);
-	delay_loop(7000000);	/* Delay half a second per insn or so */
+	do {
+		matrix_scanall();
+	} while (prog_state == STATE_STOPPED);
+
+	if (prog_state == STATE_STEP) {
+		prog_state = STATE_STOPPED;
+	}
 }
 
 void SVCall_Handler_c(struct ContextStateFrame_s *frame)

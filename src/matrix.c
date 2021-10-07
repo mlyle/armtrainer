@@ -76,6 +76,13 @@ void matrix_scanstep()
 	delay_loop(100);
 }
 
+void matrix_scanall()
+{
+	for (int i=0; i < NELEMENTS(matrix_outps); i++) {
+		matrix_scanstep();
+	}
+}
+
 void matrix_init()
 {
 	/* Cols are OUTPUT HIGH or input pulldown; initially input */

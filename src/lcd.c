@@ -82,6 +82,12 @@ static inline void lcd_blit(int x, int y, uint8_t r, uint8_t g, uint8_t b)
 	}
 }
 
+void lcd_blit_horiz(int x, int y, int x2, uint8_t r, uint8_t g, uint8_t b) {
+	for (int i=x; i <= x2; i++) {
+		lcd_blit(i, y, r, g, b);
+	}
+}
+
 static void lcd_blit_char_internal(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 		uint8_t bgr, uint8_t bgg, uint8_t bgb)
 {
@@ -108,10 +114,6 @@ void lcd_blit_char(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 		uint8_t bgr, uint8_t bgg, uint8_t bgb)
 {
 	lcd_blit_char_internal(c, x, y, r, g, b, bgr, bgg, bgb);
-
-	/* XXX crummy refresh behavior here, but adequate for now */
-
-	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
 }
 
 void lcd_blit_string(char *str, int x, int y, uint8_t r, uint8_t g, uint8_t b,
@@ -121,6 +123,11 @@ void lcd_blit_string(char *str, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 		str++; x+=9;
 	}
 
+	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
+}
+
+void lcd_refresh()
+{
 	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
 }
 
@@ -175,7 +182,7 @@ void lcd_test_pattern()
 		}
 	}
 
-	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
+	lcd_refresh();
 }
 
 void lcd_init()
@@ -235,54 +242,5 @@ void lcd_init()
 
 	lcd_send_command(0x2c);
 
-	/* red increasing by y, green increasing by x */
-	for (int i = 0; i < 16; i++) {
-		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, i, j/10, 0x0);
-		}
-	}
-
-	/* blue increasing by y, green increasing by x */
-	for (int i = 16; i < 32; i++) {
-		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, 0, j/10, i-16);
-		}
-	}
-
-	/* red increasing by y, blue increasing by x */
-	for (int i = 32; i < 48; i++) {
-		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, i-32, 0, j/10);
-		}
-	}
-
-	/* Gray increasing by x */
-	for (int i = 48; i < 64; i++) {
-		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, j/10, j/10, j/10);
-		}
-	}
-
-	/* Red increasing by x */
-	for (int i = 64; i < 68; i++) {
-		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, j/10, 0, 0);
-		}
-	}
-
-	/* Red increasing by x */
-	for (int i = 68; i < 72; i++) {
-		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, 0, j/10, 0);
-		}
-	}
-
-	/* Red increasing by x */
-	for (int i = 72; i < 76; i++) {
-		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, 0, 0, j/10);
-		}
-	}
-
-	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
+	lcd_test_pattern();
 }

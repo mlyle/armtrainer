@@ -13,6 +13,7 @@ enum matrix_keys {
 
 void matrix_key_changed(enum matrix_keys key, bool pressed);
 void matrix_scanstep();
+void matrix_scanall();
 void matrix_init();
 
 #endif
