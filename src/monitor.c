@@ -70,22 +70,32 @@ enum progrun_state {
 	STATE_RUN
 } prog_state;
 
+static inline void blit_screen();
+
+bool editing_addr;
+uint8_t edit_pos = 0;
+uint32_t edit_addr = 0;
+uint32_t edit_val = 0;
+
+static void edit_key(enum matrix_keys key) {
+	switch (key) {
+		case key_addr:
+			editing_addr = !editing_addr;
+			if (editing_addr) {
+				edit_pos = 0;
+			} else {
+				edit_pos = 4;
+			}
+			break;
+		default:
+			break;
+	}
+
+	blit_screen();
+}
+
 void matrix_key_changed(enum matrix_keys key, bool pressed)
 {
-#if 0
-	static uint8_t horiz_pos = 0;
-
-	if (pressed) {
-		lcd_blit_char(key, horiz_pos, 113, 15, 0, 0, 0, 0, 0);
-	} else {
-		lcd_blit_char(key, horiz_pos, 113, 0, 0, 15, 0, 0, 0);
-	}
-
-	horiz_pos += 9;
-	if (horiz_pos > 144) {
-		horiz_pos = 0;
-	}
-#endif
 	if (pressed) {
 		switch (key) {
 			case key_run:
@@ -99,7 +109,7 @@ void matrix_key_changed(enum matrix_keys key, bool pressed)
 				prog_state = STATE_STEP;
 				break;
 			default:
-				/* Ignore all other keys for now */
+				edit_key(key);
 				break;
 		};
 	}
@@ -158,21 +168,28 @@ struct instructions {
 	{ 0, 0, "" }
 };
 
-
-static inline void blit_addrval(uint32_t addr)
+static inline void blit_cursor(int x, int y)
 {
-	char *addrhex = to_hex32(addr);
+	lcd_blit_horiz(0, y, 159, 0, 0, 0);
+	lcd_blit_horiz(0, y+1, 159, 0, 0, 0);
+	lcd_blit_horiz(0, y+2, 159, 0, 0, 0);
+	lcd_blit_horiz(x+3, y, x+5, 15, 0, 0);
+	lcd_blit_horiz(x+2, y+1, x+6, 15, 0, 0);
+	lcd_blit_horiz(x, y+2, x+8, 15, 0, 0);
+}
+
+static inline void blit_addrval()
+{
+	char *addrhex = to_hex32(edit_addr);
 
 	lcd_blit_string(addrhex, 0, 112, 0, 0, 0, 15, 15, 15);
-
-	uint16_t *insn = (uint16_t *) addr;
-	char *inshex = to_hex16(*insn);
+	char *inshex = to_hex16(edit_val);
 	lcd_blit_string(inshex, 72, 112, 0, 0, 0, 8, 8, 15);
 
 	char *mnem="????";
 
 	for (int i = 0; insn_list[i].mask; i++) {
-		if ((*insn & insn_list[i].mask) == insn_list[i].val) {
+		if ((edit_val & insn_list[i].mask) == insn_list[i].val) {
 			mnem = insn_list[i].mnem;
 			break;
 		}
@@ -180,12 +197,11 @@ static inline void blit_addrval(uint32_t addr)
 
 	lcd_blit_string(mnem, 123, 112, 15, 15, 15, 0, 0, 0);
 
-	lcd_blit_horiz(0, 125, 159, 0, 0, 0);
-	lcd_blit_horiz(0, 126, 159, 0, 0, 0);
-	lcd_blit_horiz(0, 127, 159, 0, 0, 0);
-	lcd_blit_horiz(13, 125, 13, 15, 0, 0);
-	lcd_blit_horiz(11, 126, 15, 15, 0, 0);
-	lcd_blit_horiz(9, 127, 17, 15, 0, 0);
+	if (editing_addr) {
+		blit_cursor(9*edit_pos, 125);
+	} else {
+		blit_cursor(72 + 9*(edit_pos-4), 125);
+	}
 }
 
 static inline void blit_registers(struct ContextStateFrame_s *frame)
@@ -197,6 +213,12 @@ static inline void blit_registers(struct ContextStateFrame_s *frame)
 		lcd_blit_string(regn, 0, 60+i*13, 15, 2, 2, 0, 0, 0);
 		lcd_blit_string(reg_val, 24, 60+i*13, 15, 15, 15, 5, 0 ,0);
 	}
+}
+
+static inline void blit_screen()
+{
+	blit_addrval();
+	lcd_refresh();
 }
 
 void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
@@ -218,7 +240,11 @@ void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 		/* Skip return from syscall */
 	}
 
-	blit_addrval(frame->return_address);
+	edit_addr = frame->return_address;
+
+	edit_val = *((uint16_t *) edit_addr);
+
+	blit_screen();
 	blit_registers(frame);
 	lcd_refresh();
 
@@ -231,8 +257,40 @@ void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 	}
 }
 
+void BlitNumber(uint32_t n)
+{
+	char buf[11];
+
+	char *c = buf+10;
+	*c = 0;
+
+	while (n) {
+		c--;
+		*c = (n % 10) + '0';
+		n /= 10;
+	}
+	lcd_move_up(13, 52, 3, 3, 3);
+	lcd_blit_string(c, 0, 40, 15, 15, 15, 0, 0, 0);
+	lcd_refresh();
+}
+
+static inline void DisableSingleStep()
+{
+	CoreDebug->DEMCR = CoreDebug_DEMCR_MON_EN_Msk |
+		CoreDebug_DEMCR_TRCENA_Msk;
+}
+
+static inline void EnableSingleStep()
+{
+	CoreDebug->DEMCR = CoreDebug_DEMCR_MON_EN_Msk |
+		CoreDebug_DEMCR_TRCENA_Msk |
+		CoreDebug_DEMCR_MON_STEP_Msk;
+}
+
 void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 {
+	DisableSingleStep();
+
 	uint8_t *call = (uint8_t *) (frame->return_address - 2);
 
 	switch (*call) {
@@ -277,6 +335,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			break;		/* XXX: clear top half of screen, position
 					   cursor at 0,0 */
 		case 0x21:		/* XXX: output number in R0 to screen, as denary, newline */
+			BlitNumber(frame->r[0]);
 			break;
 		case 0x22:		/* XXX: output character in R0 to screen */
 			break;
@@ -288,6 +347,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 		default:
 			break;
 	}
+	EnableSingleStep();
 }
 
 #if 0
@@ -325,7 +385,8 @@ uint16_t myprog[] =
 	{
 		0x2001,			/* R0 = 1 */
 		0x2101,			/* R1 = 1 */
-		0xdf03,			/* LOOPBEGIN: Syscall: Blink R0 times */
+		//0xdf03,			/* LOOPBEGIN: Syscall: Blink R0 times */
+		0xdf21,			/* LOOPBEGIN: Syscall: Blink R0 times */
 		0x180A,			/* R2 = R0 + R1 */
 		0x4608,			/* R0=R1 */
 		0x4611,			/* R1=R2 */
@@ -339,13 +400,6 @@ void SVCall_Handler_c() {
 	led_toggle();
 }
 #endif
-
-void EnableSingleStep()
-{
-	CoreDebug->DEMCR = CoreDebug_DEMCR_MON_EN_Msk |
-		CoreDebug_DEMCR_TRCENA_Msk |
-		CoreDebug_DEMCR_MON_STEP_Msk;
-}
 
 void GoTo(uintptr_t addr)
 {

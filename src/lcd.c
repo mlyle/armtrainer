@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <armdio.h>
 #include <delayutil.h>
 #include <font8x13.h>
@@ -88,6 +90,15 @@ void lcd_blit_horiz(int x, int y, int x2, uint8_t r, uint8_t g, uint8_t b) {
 	}
 }
 
+void lcd_move_up(int y, int y2, uint8_t fr, uint8_t fg, uint8_t fb)
+{
+	memmove(lcd_fbuf, lcd_fbuf+(y*160*3/2), (y2-y)*160*3/2);
+
+	for (int i=y2-y; i<y2; i++) {
+		lcd_blit_horiz(0, i, 159, fr, fg, fb);
+	}
+}
+
 static void lcd_blit_char_internal(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 		uint8_t bgr, uint8_t bgg, uint8_t bgb)
 {
@@ -116,14 +127,14 @@ void lcd_blit_char(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 	lcd_blit_char_internal(c, x, y, r, g, b, bgr, bgg, bgb);
 }
 
-void lcd_blit_string(char *str, int x, int y, uint8_t r, uint8_t g, uint8_t b,
+int lcd_blit_string(char *str, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 		uint8_t bgr, uint8_t bgg, uint8_t bgb) {
 	while ((*str) && (x <= 150)) {
 		lcd_blit_char_internal(*str, x, y, r, g, b, bgr, bgg, bgb);
 		str++; x+=9;
 	}
 
-	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
+	return x;
 }
 
 void lcd_refresh()
