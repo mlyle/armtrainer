@@ -226,8 +226,7 @@ void lcd_init()
 
 	lcd_send_command(0x20);		// set noninverted
 
-	// orientation??  [cmd:]0x36 [data]???
-	lcd_send_command(0x36);
+	lcd_send_command(0x36);		// set orientation / scan directions
 	lcd_send_data(0x60);
 	
 	lcd_send_command(0x3a);
@@ -235,7 +234,6 @@ void lcd_init()
 
 	lcd_send_command(0x26);
 	lcd_send_data(0x04);		// Hopefully select a reasonable gamma
-	//lcd_send_data(0x05);		// selects 5/6/5 16 bit color
 
 	lcd_send_command(0x29);
 
@@ -253,5 +251,6 @@ void lcd_init()
 
 	lcd_send_command(0x2c);
 
-	lcd_test_pattern();
+	/* Draw black screen */
+	lcd_refresh();
 }

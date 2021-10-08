@@ -79,11 +79,11 @@ const void *_vectors[] __attribute((section(".vectors"))) =
 {
 	&_stack_top,
 	_start,
-	0,      /* XXX: NMI_Handler */
-	0,      /* XXX: HardFault_Handler */
-	0,      /* XXX: MemManage_Handler */
-	0,      /* XXX: BusFault_Handler */
-	0,      /* XXX: UsageFault_Handler */
+	DebugMon_Handler,      /* XXX: NMI_Handler */
+	DebugMon_Handler,      /* XXX: HardFault_Handler */
+	DebugMon_Handler,      /* XXX: MemManage_Handler */
+	DebugMon_Handler,      /* XXX: BusFault_Handler */
+	DebugMon_Handler,      /* XXX: UsageFault_Handler */
 	0,      /* 4 reserved */
 	0,
 	0,

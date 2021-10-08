@@ -13,6 +13,8 @@
 #include <delayutil.h>
 #include <matrix.h>
 
+#include <ctype.h>
+
 #ifndef MIN
 #define MIN(a,b) \
 	({ __typeof__ (a) _a = (a); \
@@ -26,12 +28,6 @@ static bool osc_err = false;
 
 struct __attribute__((packed)) ContextStateFrame_s {
 	uint32_t r[4];
-#if 0
-	uint32_t r0;
-	uint32_t r1;
-	uint32_t r2;
-	uint32_t r3;
-#endif
 	uint32_t r12;
 	uint32_t lr;
 	uint32_t return_address;
@@ -72,26 +68,158 @@ enum progrun_state {
 
 static inline void blit_screen();
 
-bool editing_addr;
+bool editing_addr=true;
 uint8_t edit_pos = 0;
 uint32_t edit_addr = 0;
 uint32_t edit_val = 0;
 
-static void edit_key(enum matrix_keys key) {
+static void edit_key_digit(int digit) {
+	uint32_t *edited = &edit_val;
+
+	if (editing_addr) {
+		edited = &edit_addr;
+	}
+
+	uint32_t mask = 0xf0000000;
+
+	mask >>= (edit_pos*4);
+
+	*edited = ((*edited) & (~mask)) | (digit << (4*(7-edit_pos)));
+
+	edit_pos++;
+	if (edit_pos > 7) {
+		edit_pos = 7;
+	}
+}
+
+static bool address_valid_for_write()
+{
+	if (edit_addr & 1) {
+		return false;
+	}
+
+	if ((edit_addr & 0xffff8000) == 0x20000000) {
+		return true;
+	}
+
+	return false;
+}
+
+static bool address_valid_for_read()
+{
+	if (address_valid_for_write()) {
+		return true;
+	}
+
+
+	if ((edit_addr & 0xffff0000) == 0x20000000) {
+		return true;
+	}
+
+	if ((edit_addr & 0xffc0000) == 0x08000000) {
+		return true;
+	}
+
+	return false;
+}
+
+static void perform_load(bool repeated)
+{
+	edit_addr &= 0xfffffffe;	/* Align */
+
+	if ((!editing_addr) && (repeated)) {
+		// if load pressed consecutively, increment address
+		edit_addr += 2;
+	}
+
+	if (!address_valid_for_read()) {
+		/*  XXX signal error */
+
+		return;
+	}
+
+	edit_val = *((uint16_t *) edit_addr);
+	edit_pos = 4;
+
+	editing_addr = false;
+}
+
+static void perform_store()
+{
+	if (!address_valid_for_write()) {
+		/* XXX signal error */
+		return;
+	}
+
+	if (editing_addr) {
+		/* XXX signal error */
+		return;
+	}
+
+	*((uint16_t *) edit_addr) = edit_val;
+	edit_addr += 2;
+
+	perform_load(false);
+}
+
+static void edit_key(enum matrix_keys key)
+{
+	static enum matrix_keys last_key;
+
 	switch (key) {
-		case key_addr:
-			editing_addr = !editing_addr;
-			if (editing_addr) {
-				edit_pos = 0;
+		case key_clr:
+			if (edit_pos != 0) {
+				edit_pos--;
 			} else {
-				edit_pos = 4;
+				// XXX signal error
 			}
+
+			if ((!editing_addr) && (edit_pos < 4)) {
+				edit_pos = 4;
+				// XXX signal error
+			}
+			break;
+		case key_addr:
+			if (editing_addr) {
+				perform_load(false);
+			} else {
+				editing_addr = true;
+				edit_pos = 0;
+			}
+			break;
+		case key_0:
+		case key_1:
+		case key_2:
+		case key_3:
+		case key_4:
+		case key_5:
+		case key_6:
+		case key_7:
+		case key_8:
+		case key_9:
+			edit_key_digit(key-key_0);
+			break;
+		case key_a:
+		case key_b:
+		case key_c:
+		case key_d:
+		case key_e:
+		case key_f:
+			edit_key_digit(key-key_a + 10);
+			break;
+		case key_load:
+			perform_load(last_key == key_load);
+			break;
+		case key_store:
+			perform_store();
 			break;
 		default:
 			break;
 	}
 
 	blit_screen();
+
+	last_key = key;
 }
 
 void matrix_key_changed(enum matrix_keys key, bool pressed)
@@ -109,7 +237,9 @@ void matrix_key_changed(enum matrix_keys key, bool pressed)
 				prog_state = STATE_STEP;
 				break;
 			default:
-				edit_key(key);
+				if (prog_state == STATE_STOPPED) {
+					edit_key(key);
+				}
 				break;
 		};
 	}
@@ -184,7 +314,7 @@ static inline void blit_addrval()
 
 	lcd_blit_string(addrhex, 0, 112, 0, 0, 0, 15, 15, 15);
 	char *inshex = to_hex16(edit_val);
-	lcd_blit_string(inshex, 72, 112, 0, 0, 0, 8, 8, 15);
+	lcd_blit_string(inshex, 75, 112, 0, 0, 0, 8, 8, 15);
 
 	char *mnem="????";
 
@@ -204,15 +334,29 @@ static inline void blit_addrval()
 	}
 }
 
+static inline void blit_flag(int flag, int x, int y, char f)
+{
+	if (flag) {
+		lcd_blit_char(toupper(f), x, y, 15, 9, 9, 4, 0, 0);
+	} else {
+		lcd_blit_char(tolower(f), x, y, 8, 8, 8, 0, 0, 0);
+	}
+}
+
 static inline void blit_registers(struct ContextStateFrame_s *frame)
 {
 	for (int i=0; i<4; i++) {
 		char regn[3]={ 'r', '0'+i, '\0' };
 		char *reg_val = to_hex32(frame->r[i]);
 
-		lcd_blit_string(regn, 0, 60+i*13, 15, 2, 2, 0, 0, 0);
-		lcd_blit_string(reg_val, 24, 60+i*13, 15, 15, 15, 5, 0 ,0);
+		lcd_blit_string(regn, 0, 58+i*13, 15, 2, 2, 0, 0, 0);
+		lcd_blit_string(reg_val, 24, 58+i*13, 15, 15, 15, 5, 0 ,0);
 	}
+
+	blit_flag(frame->xpsr & 0x80000000, 123, 62, 'n');
+	blit_flag(frame->xpsr & 0x40000000, 132, 62, 'z');
+	blit_flag(frame->xpsr & 0x20000000, 141, 62, 'c');
+	blit_flag(frame->xpsr & 0x10000000, 150, 62, 'v');
 }
 
 static inline void blit_screen()
@@ -236,7 +380,7 @@ void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 
 	uint8_t *firstbyte = (uint8_t *) (frame->return_address + 1);
 	if (*firstbyte == 0xdf) {
-		skip_next = true;
+		//skip_next = true;
 		/* Skip return from syscall */
 	}
 
@@ -248,12 +392,20 @@ void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 	blit_registers(frame);
 	lcd_refresh();
 
+	editing_addr = true;
+	edit_pos = 0;
+
 	do {
 		matrix_scanall();
 	} while (prog_state == STATE_STOPPED);
 
 	if (prog_state == STATE_STEP) {
 		prog_state = STATE_STOPPED;
+	}
+
+	if (edit_addr != frame->return_address) {
+		skip_next = false;
+		frame->return_address = edit_addr;
 	}
 }
 
@@ -269,7 +421,7 @@ void BlitNumber(uint32_t n)
 		*c = (n % 10) + '0';
 		n /= 10;
 	}
-	lcd_move_up(13, 52, 3, 3, 3);
+	lcd_move_up(13, 53, 3, 3, 3);
 	lcd_blit_string(c, 0, 40, 15, 15, 15, 0, 0, 0);
 	lcd_refresh();
 }
@@ -289,8 +441,6 @@ static inline void EnableSingleStep()
 
 void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 {
-	DisableSingleStep();
-
 	uint8_t *call = (uint8_t *) (frame->return_address - 2);
 
 	switch (*call) {
@@ -347,29 +497,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 		default:
 			break;
 	}
-	EnableSingleStep();
 }
-
-#if 0
-uint16_t myprog[] =
-	{
-		0x467f,			/* Load current PC value(+4) to R7 */
-		0xe003,			/* Branch forward 4 halfwords of instructions */
-		0xffff,			/* Literal pool -- R7 + 0 */
-		0x0040,			// byte order is confusing for students, praps avoid literals
-		0xffff,			/* Literal pool -- R7 + 2*/
-		0x0008,
-		0x6838,			/* BEGIN: load R0 from [R7 + 0] */
-		0x3801,			/* LOOP: Subtract 1 from R0 */
-		0xd1fd,			/* Branch if not zero to previous instruction (LOOP) */
-		0xdf01,			/* syscall 1: turn off LED */
-		0x6878,			/* load R0 from [R7 + 2] */
-		0x3801,			/* LOOP2: Subtract 1 from R0 */
-		0xd1fd,			/* Branch if not zero to previous instruction (LOOP2) */
-		0xdf02,			/* syscall 0: turn on LED */
-		0xe7f6,			/* Branch back to BEGIN */
-	};
-#endif
 
 #if 0
 uint16_t myprog[] =
@@ -381,6 +509,7 @@ uint16_t myprog[] =
 	};
 #endif
 
+#if 0
 uint16_t myprog[] =
 	{
 		0x2001,			/* R0 = 1 */
@@ -392,13 +521,6 @@ uint16_t myprog[] =
 		0x4611,			/* R1=R2 */
 		0xe7fa,			/* Goto 4 instructions before this one */
 	};
-
-
-
-#if 0
-void SVCall_Handler_c() {
-	led_toggle();
-}
 #endif
 
 void GoTo(uintptr_t addr)
@@ -407,7 +529,8 @@ void GoTo(uintptr_t addr)
 }
 
 
-int main() {
+int main()
+{
 	RCC_DeInit();
 
 	// Wait for internal oscillator settle.
@@ -482,7 +605,8 @@ int main() {
 
 	SysTick_Config(60000000/200);	/* 200Hz systick */
 
-	NVIC_SetPriority(SVCall_IRQn, 3);
+	NVIC_SetPriority(DebugMonitor_IRQn, 2);
+	NVIC_SetPriority(SVCall_IRQn, 1);
 	NVIC_SetPriority(SysTick_IRQn, 0);
 
 	led_init_pin(GPIOC, GPIO_Pin_13, true);
@@ -491,19 +615,12 @@ int main() {
 		led_panic("oscfail");
 	}
 
-#if 0
-	led_panic("ohno");
-#endif
-
 	lcd_init();
+	lcd_blit_string("MPTrainer V0.1", 0, 1, 15, 15, 0, 0, 0, 0);
+	lcd_blit_string("Copyright", 0, 27, 0, 15, 15, 0, 0, 0);
+	lcd_blit_string("2021   M. Lyle", 0, 40, 0, 15, 15, 0, 0, 0);
 	matrix_init();
 
-#if 0
-	while(1) {
-		matrix_scanstep();
-	}
-#endif
-
 	EnableSingleStep();
-	GoTo((uintptr_t)myprog);
+	GoTo(0x20000000);
 }
