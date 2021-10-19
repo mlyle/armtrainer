@@ -49,6 +49,32 @@ void lcd_send_data(uint8_t data)
 	DIOHigh(lcd_cs);
 }
 
+static inline void lcd_send_data_singlecolor(uint8_t r, uint8_t g, uint8_t b, int len)
+{
+	uint8_t bytes[] = {
+		(r << 4) | g,
+		(b << 4) | r,
+		(g << 4) | b
+	};
+
+	delay_loop(100);
+	DIOHigh(lcd_a0);
+	delay_loop(100);
+	DIOLow(lcd_cs);
+	delay_loop(100);
+
+	for (int i = 0; i < len; i++) {
+		lcd_spi->DR = bytes[i % 3]; // send SPI
+
+		// and wait for completion
+		while (!(lcd_spi->SR & SPI_SR_TXE));
+		while ((lcd_spi->SR & SPI_SR_BSY));
+	}
+
+	delay_loop(100);
+	DIOHigh(lcd_cs);
+}
+
 static inline void lcd_send_data_bulk(uint8_t *data, int len)
 {
 	delay_loop(100);
@@ -67,7 +93,7 @@ static inline void lcd_send_data_bulk(uint8_t *data, int len)
 	DIOHigh(lcd_cs);
 }
 
-static inline void lcd_blit(int x, int y, uint8_t r, uint8_t g, uint8_t b)
+static inline void lcd_blit_internal(int x, int y, uint8_t r, uint8_t g, uint8_t b)
 {
 	int addr = y * 160 + x;
 	/* 1,0 = 1; 2,0 = 2   3,0 = 3 */
@@ -84,9 +110,14 @@ static inline void lcd_blit(int x, int y, uint8_t r, uint8_t g, uint8_t b)
 	}
 }
 
+void lcd_blit(int x, int y, uint8_t r, uint8_t g, uint8_t b)
+{
+	lcd_blit_internal(x, y, r, g, b);
+}
+
 void lcd_blit_horiz(int x, int y, int x2, uint8_t r, uint8_t g, uint8_t b) {
 	for (int i=x; i <= x2; i++) {
-		lcd_blit(i, y, r, g, b);
+		lcd_blit_internal(i, y, r, g, b);
 	}
 }
 
@@ -110,9 +141,9 @@ static void lcd_blit_char_internal(uint8_t c, int x, int y, uint8_t r, uint8_t g
 		uint8_t tmp = (*raster)[i];
 		for (int j = 0 ; j < 9; j++) {
 			if (tmp & 0x80) {
-				lcd_blit(x+j, y, r, g, b);
+				lcd_blit_internal(x+j, y, r, g, b);
 			} else {
-				lcd_blit(x+j, y, bgr, bgg, bgb);
+				lcd_blit_internal(x+j, y, bgr, bgg, bgb);
 			}
 
 			tmp <<= 1;
@@ -142,54 +173,63 @@ void lcd_refresh()
 	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
 }
 
+void lcd_signalerror()
+{
+	lcd_send_data_singlecolor(15, 3, 3, sizeof(lcd_fbuf));
+
+	delay_ms(45);
+
+	lcd_refresh();
+}
+
 void lcd_test_pattern()
 {
 	/* red increasing by y, green increasing by x */
 	for (int i = 0; i < 16; i++) {
 		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, i, j/10, 0x0);
+			lcd_blit_internal(j, i, i, j/10, 0x0);
 		}
 	}
 
 	/* blue increasing by y, green increasing by x */
 	for (int i = 16; i < 32; i++) {
 		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, 0, j/10, i-16);
+			lcd_blit_internal(j, i, 0, j/10, i-16);
 		}
 	}
 
 	/* red increasing by y, blue increasing by x */
 	for (int i = 32; i < 48; i++) {
 		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, i-32, 0, j/10);
+			lcd_blit_internal(j, i, i-32, 0, j/10);
 		}
 	}
 
 	/* Gray increasing by x */
 	for (int i = 48; i < 64; i++) {
 		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, j/10, j/10, j/10);
+			lcd_blit_internal(j, i, j/10, j/10, j/10);
 		}
 	}
 
 	/* Red increasing by x */
 	for (int i = 64; i < 68; i++) {
 		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, j/10, 0, 0);
+			lcd_blit_internal(j, i, j/10, 0, 0);
 		}
 	}
 
 	/* Red increasing by x */
 	for (int i = 68; i < 72; i++) {
 		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, 0, j/10, 0);
+			lcd_blit_internal(j, i, 0, j/10, 0);
 		}
 	}
 
 	/* Red increasing by x */
 	for (int i = 72; i < 76; i++) {
 		for (int j=0; j<160; j++) {
-			lcd_blit(j, i, 0, 0, j/10);
+			lcd_blit_internal(j, i, 0, 0, j/10);
 		}
 	}
 

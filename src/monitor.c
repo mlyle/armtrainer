@@ -133,7 +133,7 @@ static void perform_load(bool repeated)
 	}
 
 	if (!address_valid_for_read()) {
-		/*  XXX signal error */
+		lcd_signalerror();
 
 		return;
 	}
@@ -147,12 +147,12 @@ static void perform_load(bool repeated)
 static void perform_store()
 {
 	if (!address_valid_for_write()) {
-		/* XXX signal error */
+		lcd_signalerror();
 		return;
 	}
 
 	if (editing_addr) {
-		/* XXX signal error */
+		lcd_signalerror();
 		return;
 	}
 
@@ -171,12 +171,12 @@ static void edit_key(enum matrix_keys key)
 			if (edit_pos != 0) {
 				edit_pos--;
 			} else {
-				// XXX signal error
+				lcd_signalerror();
 			}
 
 			if ((!editing_addr) && (edit_pos < 4)) {
 				edit_pos = 4;
-				// XXX signal error
+				lcd_signalerror();
 			}
 			break;
 		case key_addr:
@@ -295,6 +295,7 @@ struct instructions {
 	{ 0xff00, 0xdf00, "SYSc" },	// 11011111b
 	{ 0xf800, 0x2000, "MOVi" }, 	// 00100b
 	{ 0xff00, 0x4600, "MOVr" },	// 0100 0110b
+	/* XXX fill out rest of these */
 	{ 0, 0, "" }
 };
 
@@ -426,6 +427,28 @@ void BlitNumber(uint32_t n)
 	lcd_refresh();
 }
 
+void BlitIcon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr) {
+	uint16_t *lines = (uint16_t *)ret_addr;
+
+	uint8_t r = (color & 0xf00) >> 8;
+	uint8_t g = (color & 0x0f0) >> 4;
+	uint8_t b = (color & 0x00f);
+
+	for (int i = 0; i < 16; i++) {
+		uint16_t tmp = lines[i];
+
+		for (int j = 0; j < 16; j++) {
+			if (tmp & 0x8000) {
+				lcd_blit(x+j, y+i, r, g, b);
+			} else {
+				lcd_blit(x+j, y+i, 0, 0, 0);
+			}
+
+			tmp <<= 1;
+		}
+	}
+}
+
 static inline void DisableSingleStep()
 {
 	CoreDebug->DEMCR = CoreDebug_DEMCR_MON_EN_Msk |
@@ -484,7 +507,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 		case 0x20:
 			break;		/* XXX: clear top half of screen, position
 					   cursor at 0,0 */
-		case 0x21:		/* XXX: output number in R0 to screen, as denary, newline */
+		case 0x21:		/* output number in R0 to screen, as denary, newline */
 			BlitNumber(frame->r[0]);
 			break;
 		case 0x22:		/* XXX: output character in R0 to screen */
@@ -493,41 +516,22 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			break;
 		case 0x24:		/* XXX: draw black dot at (R0, R1) */
 			break;
+		case 0x25:		/* XXX: Draw 16x16 (32b) icon following this insn,
+					** at (R1, R2) in color R0
+					*/
+			BlitIcon(frame->r[0], frame->r[1], frame->r[2], frame->return_address);
+			frame->return_address += 32;
+			break;
 
 		default:
 			break;
 	}
 }
 
-#if 0
-uint16_t myprog[] =
-	{
-		0xdf00,			/* syscall 0x00: toggle LED */
-		0x2004,			/* load 0x4 (4) into register R0 */
-		0xdf11,			/* syscall 0x11: Delay r0 (0.4s) */
-		0xe7fb,			/* go back to the first syscall */
-	};
-#endif
-
-#if 0
-uint16_t myprog[] =
-	{
-		0x2001,			/* R0 = 1 */
-		0x2101,			/* R1 = 1 */
-		//0xdf03,			/* LOOPBEGIN: Syscall: Blink R0 times */
-		0xdf21,			/* LOOPBEGIN: Syscall: Blink R0 times */
-		0x180A,			/* R2 = R0 + R1 */
-		0x4608,			/* R0=R1 */
-		0x4611,			/* R1=R2 */
-		0xe7fa,			/* Goto 4 instructions before this one */
-	};
-#endif
-
 void GoTo(uintptr_t addr)
 {
 	asm volatile("MOV PC, %[addr]\n" : : [addr]"r"(addr) );
 }
-
 
 int main()
 {
