@@ -187,7 +187,7 @@ void console_nl()
 	lcd_move_up(13, 53, 3, 3, 3);
 }
 
-void console_char(uint8_t c)
+void console_char_norefresh(uint8_t c)
 {
 	switch (c)
 	{
@@ -218,6 +218,12 @@ void console_char(uint8_t c)
 	}
 }
 
+void console_char(uint8_t c)
+{
+	console_char_norefresh(c);
+	lcd_refresh();
+}
+
 void console_number_10(uint32_t n)
 {
 	console_cr();
@@ -235,7 +241,7 @@ void console_number_10(uint32_t n)
 	}
 
 	while (*c) {
-		console_char(*c);
+		console_char_norefresh(*c);
 		c++;
 	}
 
@@ -249,7 +255,7 @@ void console_number_16(uint32_t n)
 
 	char *str = to_hex32(n);
 	while (*str) {
-		console_char(*str);
+		console_char_norefresh(*str);
 		str++;
 	}
 
