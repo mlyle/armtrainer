@@ -35,6 +35,22 @@ struct __attribute__((packed)) ContextStateFrame_s {
 	uint32_t xpsr;
 };
 
+/* Single step state machine */
+enum progrun_state {
+	STATE_STOPPED,
+	STATE_STEP,
+	STATE_RUN
+} prog_state;
+
+/* State machine for keypad editing addresses/values */
+bool editing_addr = true;
+uint8_t edit_pos = 0;
+uint32_t edit_addr = 0;
+uint32_t edit_val = 0;
+
+uint8_t draw_column;
+uint8_t draw_r = 0x0f, draw_g = 0x0f, draw_b = 0x0f;
+uint8_t draw_bg_r, draw_bg_g, draw_bg_b;
 
 __attribute__((naked))
 void SVCall_Handler(void)
@@ -60,17 +76,6 @@ void DebugMon_Handler(void)
 			"mrsne r0, psp \n"
 			"b DebugMon_Handler_c \n");
 }
-
-enum progrun_state {
-	STATE_STOPPED,
-	STATE_STEP,
-	STATE_RUN
-} prog_state;
-
-bool editing_addr = true;
-uint8_t edit_pos = 0;
-uint32_t edit_addr = 0;
-uint32_t edit_val = 0;
 
 static inline void blit_cursor(int x, int y)
 {
@@ -161,9 +166,63 @@ void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 	}
 }
 
-/* XXX */
-void BlitNumber(uint32_t n)
+
+#define NUMCOL 17
+
+void console_bs()
 {
+	if (draw_column >= 1)
+	{
+		draw_column--;
+	}
+}
+
+void console_cr()
+{
+	draw_column = 0;
+}
+
+void console_nl()
+{
+	lcd_move_up(13, 53, 3, 3, 3);
+}
+
+void console_char(uint8_t c)
+{
+	switch (c)
+	{
+		case 10:
+			console_nl();
+			break;
+		case 13:
+			console_cr();
+			break;
+		case 127:
+		case 8:
+			console_bs();
+			break;
+		case 7: /* bell */
+			lcd_signalerror();
+			break;
+		default:
+			if (draw_column >= NUMCOL) {
+				console_cr();
+				console_nl();
+			}
+
+			lcd_blit_char(c, draw_column*9, 40, draw_r, draw_g, draw_b,
+				draw_bg_r, draw_bg_g, draw_bg_b);
+			draw_column++;
+
+			break;
+	}
+}
+
+void console_number_10(uint32_t n)
+{
+	console_cr();
+	console_nl();
+
 	char buf[11];
 
 	char *c = buf+10;
@@ -174,8 +233,26 @@ void BlitNumber(uint32_t n)
 		*c = (n % 10) + '0';
 		n /= 10;
 	}
-	lcd_move_up(13, 53, 3, 3, 3);
-	lcd_blit_string(c, 0, 40, 15, 15, 15, 0, 0, 0);
+
+	while (*c) {
+		console_char(*c);
+		c++;
+	}
+
+	lcd_refresh();
+}
+
+void console_number_16(uint32_t n)
+{
+	console_cr();
+	console_nl();
+
+	char *str = to_hex32(n);
+	while (*str) {
+		console_char(*str);
+		str++;
+	}
+
 	lcd_refresh();
 }
 
@@ -184,6 +261,15 @@ static inline void color_8bit_to_12bit(uint32_t color, uint8_t *r, uint8_t *g, u
 	*r = (color & 0xc0) >> 4;   /* RR00 0000 -> RR00 */
 	*g = (color & 0x31) >> 2;   /* 00GG G000 -> GGG0 */
 	*b = (color & 0x7) << 1;	/* 0000 0BBB -> BBB0 */
+}
+
+void blit_dot(uint32_t color, uint8_t x, uint8_t y)
+{
+	uint8_t r, g, b;
+	
+	color_8bit_to_12bit(color, &r, &g, &b);
+
+	lcd_blit(x, y, r, g, b);
 }
 
 void blit_icon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr) {
@@ -199,7 +285,7 @@ void blit_icon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr) {
 			if (tmp & 0x8000) {
 				lcd_blit(x+j, y+i, r, g, b);
 			} else {
-				lcd_blit(x+j, y+i, 0, 0, 0);
+				lcd_blit(x+j, y+i, draw_bg_r, draw_bg_g, draw_bg_b);
 			}
 
 			tmp <<= 1;
@@ -220,7 +306,8 @@ static inline void singlestep_enable()
 		CoreDebug_DEMCR_MON_STEP_Msk;
 }
 
-static void edit_key_digit(int digit) {
+static void edit_key_digit(int digit)
+{
 	uint32_t *edited = &edit_val;
 
 	if (editing_addr) {
@@ -434,26 +521,36 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 
 			break;
 
-		case 0x20:
-					   /* XXX: clear top half of screen, position
-					   cursor at 0,0 */
+		case 0x20:		/* clear top half of screen, position cursor at 0 */
+			lcd_blit_rows(0, 53, 0, 0, 0);
+			draw_column = 0;
 			break;		
 		case 0x21:		/* output number in R0 to screen, as denary, newline */
-			BlitNumber(frame->r[0]);
+			console_number_10(frame->r[0]);
 			break;
-		case 0x22:		/* XXX output number in R0 to screen, as hex, newline */
-			// BlitNumber(frame->r[0]);
+		case 0x22:		/* output number in R0 to screen, as hex, newline */
+			console_number_16(frame->r[0]);
 			break;
 
-		case 0x23:		/* XXX: output character in R0 to screen */
+		case 0x23:		/* output character in R0 to screen */
+			console_char(frame->r[0]);
 			break;
-		case 0x24:		/* XXX: draw white dot at (R1, R2), color R0 */
+		case 0x24:		/* draw dot at (R1, R2), color R0 */
+			blit_dot(frame->r[0], frame->r[1], frame->r[2]);
 			break;
-		case 0x25:		/* XXX: Draw 16x16 (32b) icon following this insn,
-					** at (R1, R2) in color R0
-					*/
+		case 0x25:		/* Draw 16x16 (32b) icon following this insn,
+						** at (R1, R2) in color R0
+						*/
 			blit_icon(frame->r[0], frame->r[1], frame->r[2], frame->return_address);
 			frame->return_address += 32;
+			break;
+		
+		case 0x30:		/* Undocumented for students.  Set color for text. */
+			color_8bit_to_12bit(frame->r[0], &draw_r, &draw_g, &draw_b);
+			break;
+
+		case 0x31:		/* Undocumented for students.  Set bgcolor for text, icons */
+			color_8bit_to_12bit(frame->r[0], &draw_bg_r, &draw_bg_g, &draw_bg_b);
 			break;
 
 		default:
@@ -461,9 +558,17 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 	}
 }
 
-void GoTo(uintptr_t addr)
+void code_invoke(uintptr_t addr)
 {
-	asm volatile("MOV PC, %[addr]\n" : : [addr]"r"(addr) );
+	asm volatile(
+		"MOV r0, #0\n"
+		"MOV r1, #0\n"
+		"MOV r2, #0\n"
+		"MOV r3, %[addr]\n"
+		"MOV r7, %[addr]\n"
+		"MOV PC, %[addr]\n" 
+		: : [addr]"r"(addr)
+		: "r0", "r1", "r2", "r3", "r7" );
 }
 
 int main()
@@ -542,6 +647,11 @@ int main()
 
 	SysTick_Config(60000000/200);	/* 200Hz systick */
 
+	/* This ordering is necessary to allow systick and syscall to
+	** be prioritized over debugmonitor.  Effectively this means that
+	** single step does not follow them and that systick is highest
+	** priority.
+	*/
 	NVIC_SetPriority(DebugMonitor_IRQn, 2);
 	NVIC_SetPriority(SVCall_IRQn, 1);
 	NVIC_SetPriority(SysTick_IRQn, 0);
@@ -559,5 +669,5 @@ int main()
 	matrix_init();
 
 	singlestep_enable();
-	GoTo(0x20000000);
+	code_invoke(0x20000000);
 }

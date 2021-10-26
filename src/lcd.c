@@ -12,8 +12,6 @@ static DIOTag_t lcd_mosi = GPIOB_DIO(15); // AF05
 static DIOTag_t lcd_sck = GPIOB_DIO(13);  // AF05
 static SPI_TypeDef *lcd_spi = SPI2;
 
-static inline void lcd_send_data_bulk(uint8_t *data, int len);
-
 static uint8_t lcd_fbuf[160*128*3/2];
 
 static inline void lcd_send_command(uint8_t cmd)
@@ -95,6 +93,11 @@ static inline void lcd_send_data_bulk(uint8_t *data, int len)
 
 static inline void lcd_blit_internal(int x, int y, uint8_t r, uint8_t g, uint8_t b)
 {
+	if (x < 0) return;
+	if (y < 0) return;
+	if (y > 127) return;
+	if (x > 159) return;
+
 	int addr = y * 160 + x;
 	/* 1,0 = 1; 2,0 = 2   3,0 = 3 */
 	addr *= 3;
@@ -138,11 +141,13 @@ void lcd_move_up(int y, int y2, uint8_t fr, uint8_t fg, uint8_t fb)
 static void lcd_blit_char_internal(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 		uint8_t bgr, uint8_t bgg, uint8_t bgb)
 {
-	/* XXX enforce range */
+	if ((c < 0x20) || (c > 0x7e)) {
+		c = ' ';
+	}
 
 	uint8_t (*raster)[13] = &font_8x13_rasters[c - 0x20];
 
-	for (int i = 12 ; i >= 0; i--) {
+	for (int i = 12 ; i >= 0; i--){
 		uint8_t tmp = (*raster)[i];
 		for (int j = 0 ; j < 9; j++) {
 			if (tmp & 0x80) {
@@ -249,8 +254,6 @@ void lcd_init()
 	DIOSetOutput(lcd_a0, false, DIO_DRIVE_WEAK, true);
 	DIOSetAltfuncOutput(lcd_mosi, 5, false, DIO_DRIVE_STRONG);
 	DIOSetAltfuncOutput(lcd_sck, 5, false, DIO_DRIVE_STRONG);
-
-	// XXX PB14 MISO, PB12 SDCS
 
 	// Configure SPI
 
