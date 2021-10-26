@@ -23,9 +23,8 @@ STDPERIPH_SRC += stm32f4xx_usart.c
 STDPERIPH_SRC += misc.c
 
 STDPERIPH_SRC := $(patsubst %,libs/STM32F4xx_StdPeriph_Driver/src/%,$(STDPERIPH_SRC))
-FATFS_SRC := $(wildcard libs/fatfs/*.c)
 OTHERLIB_SRC := $(wildcard libs/src/*.c)
-SHARED_SRC := $(wildcard shared/*.c) $(OTHERLIB_SRC) $(FATFS_SRC) $(STDPERIPH_SRC)
+SHARED_SRC := $(wildcard shared/*.c) $(OTHERLIB_SRC) $(STDPERIPH_SRC)
 MONITOR_SRC := $(wildcard src/*.c)
 
 SRC := $(SHARED_SRC) $(MONITOR_SRC)

@@ -121,13 +121,18 @@ void lcd_blit_horiz(int x, int y, int x2, uint8_t r, uint8_t g, uint8_t b) {
 	}
 }
 
+void lcd_blit_rows(int y, int y2, uint8_t fr, uint8_t fg, uint8_t fb)
+{
+	for (int i=y; i<y2; i++) {
+		lcd_blit_horiz(0, i, 159, fr, fg, fb);
+	}
+}
+
 void lcd_move_up(int y, int y2, uint8_t fr, uint8_t fg, uint8_t fb)
 {
 	memmove(lcd_fbuf, lcd_fbuf+(y*160*3/2), (y2-y)*160*3/2);
 
-	for (int i=y2-y; i<y2; i++) {
-		lcd_blit_horiz(0, i, 159, fr, fg, fb);
-	}
+	lcd_blit_rows(y2-y, y2, fr, fg, fb);
 }
 
 static void lcd_blit_char_internal(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
