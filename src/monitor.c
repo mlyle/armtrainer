@@ -585,6 +585,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 
 			snake();
 			singlestep_enable();
+			prog_state = STATE_STOPPED;
 			break;
 		default:
 			break;
