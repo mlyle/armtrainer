@@ -52,6 +52,8 @@ uint8_t draw_column;
 uint8_t draw_r = 0x0f, draw_g = 0x0f, draw_b = 0x0f;
 uint8_t draw_bg_r, draw_bg_g, draw_bg_b;
 
+void snake();
+
 __attribute__((naked))
 void SVCall_Handler(void)
 {
@@ -462,7 +464,7 @@ static void edit_key(enum matrix_keys key)
 	last_key = key;
 }
 
-void matrix_key_changed(enum matrix_keys key, bool pressed)
+static void monitor_key_changed(enum matrix_keys key, bool pressed)
 {
 	if (pressed) {
 		switch (key) {
@@ -558,7 +560,32 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 		case 0x31:		/* Undocumented for students.  Set bgcolor for text, icons */
 			color_8bit_to_12bit(frame->r[0], &draw_bg_r, &draw_bg_g, &draw_bg_b);
 			break;
+		
+		case 0x40:		/* Undocumented for students: disable single step / run fast */
+			singlestep_disable();
+			break;
 
+		case 0x41:		/* Undocumented for students: enable single step & halt */
+			singlestep_enable();
+			prog_state = STATE_STOPPED; 
+			break;
+
+
+		case 0x45:		/* 'E', hidden secret snake syscall... */
+			if ((frame->r[0] != 'S') ||
+					(frame->r[1] != 'N') ||
+					(frame->r[2] != 'A')) {
+				/* Can't easily check r[3] for 'K' */
+				return;
+			}
+
+			singlestep_disable();
+			lcd_blit_string("snake!!!", 24, 58, 0, 0, 0, 4, 15, 4);
+			lcd_blit_string("use 1469", 24, 71, 4, 15, 4, 0, 0, 0);
+
+			snake();
+			singlestep_enable();
+			break;
 		default:
 			break;
 	}
@@ -673,6 +700,7 @@ int main()
 	lcd_blit_string("Copyright", 0, 27, 0, 15, 15, 0, 0, 0);
 	lcd_blit_string("2021   M. Lyle", 0, 40, 0, 15, 15, 0, 0, 0);
 	matrix_init();
+	matrix_set_callback(monitor_key_changed);
 
 	singlestep_enable();
 	code_invoke(0x20000000);

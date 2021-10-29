@@ -11,6 +11,11 @@ enum matrix_keys {
 	key_invalid = 'x'
 };
 
+// void matrix_key_changed(enum matrix_keys key, bool pressed)
+typedef void (*matrix_cb_t)(enum matrix_keys, bool);
+
+/* Returns previous value */
+matrix_cb_t matrix_set_callback(matrix_cb_t cb);
 void matrix_key_changed(enum matrix_keys key, bool pressed);
 void matrix_scanstep();
 void matrix_scanall();

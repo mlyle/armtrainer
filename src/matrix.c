@@ -22,6 +22,8 @@ static DIOTag_t matrix_inps[] = {
 
 static uint8_t outp_statuses[NELEMENTS(matrix_outps)];
 
+static matrix_cb_t matrix_callback;
+
 
 /* This is the keymap rotated 90 degrees CCW */
 static const enum matrix_keys keymap[NELEMENTS(matrix_inps) * NELEMENTS(matrix_outps)] = {
@@ -48,7 +50,10 @@ void matrix_scanstep()
 
 		if (old_status != pin) {
 			enum matrix_keys key = keymap[cur_outp * NELEMENTS(matrix_inps) + i];
-			matrix_key_changed(key, pin);
+
+			if (matrix_callback) {
+				matrix_callback(key, pin);
+			}
 
 			if (pin) {
 				outp_stat |= inp_mask;
@@ -74,6 +79,15 @@ void matrix_scanstep()
 	// set new current col as output high
 	DIOSetOutput(matrix_outps[cur_outp], false, DIO_DRIVE_LIGHT, true);
 	delay_loop(100);
+}
+
+matrix_cb_t matrix_set_callback(matrix_cb_t cb)
+{
+	matrix_cb_t prev_value = matrix_callback;
+
+	matrix_callback = cb;
+
+	return prev_value;
 }
 
 void matrix_scanall()

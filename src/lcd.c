@@ -124,6 +124,23 @@ void lcd_blit_horiz(int x, int y, int x2, uint8_t r, uint8_t g, uint8_t b) {
 	}
 }
 
+void lcd_getcolor(int x, int y, uint8_t *r, uint8_t *g, uint8_t *b)
+{
+	int addr = y * 160 + x;
+	addr *= 3;
+	addr /= 2;
+
+	if (x % 2) {
+		*r = (lcd_fbuf[addr]) & 0x0f;
+		*g = (lcd_fbuf[addr+1] >> 4) & 0x0f;
+		*b = (lcd_fbuf[addr+1]) & 0x0f;
+	} else {
+		*r = (lcd_fbuf[addr] >> 4) & 0x0f;
+		*g = (lcd_fbuf[addr]) & 0x0f;
+		*b = (lcd_fbuf[addr+1] >> 4) & 0x0f;
+	}
+}
+
 void lcd_blit_rows(int y, int y2, uint8_t fr, uint8_t fg, uint8_t fb)
 {
 	for (int i=y; i<y2; i++) {
