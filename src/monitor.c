@@ -572,6 +572,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 
 
 		case 0x45:		/* 'E', hidden secret snake syscall... */
+			/* 2053 214e 2241 234b df45 */
 			if ((frame->r[0] != 'S') ||
 					(frame->r[1] != 'N') ||
 					(frame->r[2] != 'A')) {

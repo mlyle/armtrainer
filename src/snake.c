@@ -4,10 +4,12 @@
 #include <lcdutil.h>
 #include <matrix.h>
 #include <delayutil.h>
+#include <stringutil.h>
 
 #define COLOR_SNAKE         0x4f4 // Light green
 #define COLOR_BACKGROUND    0x000 // Black
 #define COLOR_FOOD          0xf71 // Orange-ish
+#define COLOR_BORDER        0xf58 // Red-ish
 
 #define SNAKE_SCALEFACTOR 5
 
@@ -22,6 +24,12 @@ static enum snake_direction_e {
     DIR_DOWN
 } snake_direction = DIR_RIGHT;
 
+static struct position {
+    int8_t x;
+    int8_t y;
+} positions[NUMPOSITIONS] = {};
+
+
 static uint16_t snake_curcolor(uint8_t x, uint8_t y)
 {
     uint8_t r, g, b;
@@ -35,6 +43,21 @@ static uint16_t snake_curcolor(uint8_t x, uint8_t y)
     return packed_color;
 }
 
+static void snake_drawborder(uint16_t color)
+{
+    uint8_t r = (color >> 8) & 0xff;
+    uint8_t g = (color >> 4) & 0xff;
+    uint8_t b = (color) & 0xff;
+
+    lcd_blit_horiz(0, 0, 159, r, g, b);
+    lcd_blit_horiz(0, 127, 159, r, g, b);
+    
+    for (int i = 1; i < 127; i++) {
+        lcd_blit(0, i, r, g, b);
+        lcd_blit(159, i, r, g, b);
+    }
+}
+
 static void snake_draw(uint8_t x, uint8_t y, uint16_t color)
 {
     (void) x; (void) y; (void) color;
@@ -42,10 +65,29 @@ static void snake_draw(uint8_t x, uint8_t y, uint16_t color)
     uint8_t r = (color >> 8) & 0xff;
     uint8_t g = (color >> 4) & 0xff;
     uint8_t b = (color) & 0xff;
+    uint8_t startX = x*SNAKE_SCALEFACTOR;
+    uint8_t endX = (x+1)*SNAKE_SCALEFACTOR;
+
+    /* These 4 conditionals protect the border of the field */
+    if (startX == 0) {
+        startX = 1;
+    }
+
+    if (endX > 159) {
+        endX = 159;
+    }
 
     for (int i = 0; i < SNAKE_SCALEFACTOR; i++)
     {
-        lcd_blit_horiz(x*SNAKE_SCALEFACTOR, y+i, (x+1)*SNAKE_SCALEFACTOR, r, g, b);
+        if ((y+i) == 0) {
+            continue;
+        }
+
+        if ((y+i) == 127) {
+            continue;
+        }
+
+        lcd_blit_horiz(startX, y*SNAKE_SCALEFACTOR+i, endX, r, g, b);
     }
 }
 
@@ -64,15 +106,14 @@ static inline int calc_index(int idx_in)
         idx_in += NUMPOSITIONS;
     }
 
-    while (idx_in >= NUMPOSITIONS){
-        idx_in -= NUMPOSITIONS;
-    }
+    idx_in %= NUMPOSITIONS;
 
     return idx_in;
 }
 
 static void snake_key_changed(enum matrix_keys key, bool pressed)
 {
+    /* XXX prevent doubling back?? */
 	if (pressed) {
 		switch (key) {
 			case key_1:
@@ -102,22 +143,22 @@ uint16_t myrand(void) {
 
 void snake(void)
 {
-    struct position {
-        int8_t x;
-        int8_t y;
-    } positions[NUMPOSITIONS] = {};
+    int position_idx = 0;
 
-    uint16_t position_idx = 0;
+    snake_direction = DIR_RIGHT;
 
     int8_t curX = MAXX/2, curY = MAXY/2;
 
     /* Food starts to our left, a couple rows down */
     int8_t foodX = MAXX/3, foodY = curY + 2;
 
-    uint16_t length = 5;
+    int16_t length = 5;
 
     /* Clear top of screen */
     snake_clearscreen(COLOR_BACKGROUND);
+
+    /* Draw a crude border */
+    snake_drawborder(COLOR_BORDER);
 
     /* Draw initial food */
     snake_draw(foodX, foodY, COLOR_FOOD);
@@ -125,7 +166,7 @@ void snake(void)
     matrix_cb_t prev_keycallback = matrix_set_callback(snake_key_changed);
 
     while (true) {
-        if ((curX < 0) || (curX > MAXX) || (curY < 0) || (curX > MAXY))
+        if ((curX < 0) || (curX > MAXX) || (curY < 0) || (curY > MAXY))
         {
             /* Death: hitting the wall */
             break;
@@ -137,7 +178,10 @@ void snake(void)
         }
 
         if ((curX == foodX) && (curY == foodY)) {
-            length++;
+            length += 3;
+
+            char *score = to_hex32(length);
+            lcd_blit_string(score, 24, 84, 15, 15, 0, 0, 0, 9);
 
             // Generate food positions until we find an empty one.
             do {
@@ -167,7 +211,7 @@ void snake(void)
         lcd_refresh();
 
         uint32_t orig = systick_cnt;
-        while ((systick_cnt - orig) < 4) {
+        while ((systick_cnt - orig) < 26) {
             matrix_scanall();
         }
 

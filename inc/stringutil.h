@@ -14,7 +14,7 @@ static inline char to_hexdigit(uint8_t d)
 	return 0;
 }
 
-static char *to_hex32(uint32_t ptr)
+static inline char *to_hex32(uint32_t ptr)
 {
 	static char buffer[9];
 	buffer[8] = 0;
@@ -27,7 +27,7 @@ static char *to_hex32(uint32_t ptr)
 	return buffer;
 }
 
-static char *to_hex16(uint16_t val)
+static inline char *to_hex16(uint16_t val)
 {
 	static char buffer[5];
 	buffer[4] = 0;
@@ -40,7 +40,7 @@ static char *to_hex16(uint16_t val)
 	return buffer;
 }
 
-struct instructions {
+static struct instructions {
 	uint16_t mask;
 	uint16_t val;
 	char mnem[5];	/* with null */
@@ -72,7 +72,7 @@ struct instructions {
 	{ 0, 0, "????" }
 };
 
-static char *get_mnem(uint16_t insn)
+static inline char *get_mnem(uint16_t insn)
 { 
 	for (int i = 0; ; i++) {
 		if ((insn & insn_list[i].mask) == insn_list[i].val) {
