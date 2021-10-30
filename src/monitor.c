@@ -52,7 +52,7 @@ uint8_t draw_column;
 uint8_t draw_r = 0x0f, draw_g = 0x0f, draw_b = 0x0f;
 uint8_t draw_bg_r, draw_bg_g, draw_bg_b;
 
-void snake();
+int snake();
 
 __attribute__((naked))
 void SVCall_Handler(void)
@@ -584,7 +584,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			lcd_blit_string("snake!!!", 24, 58, 0, 0, 0, 4, 15, 4);
 			lcd_blit_string("use 1469", 24, 71, 4, 15, 4, 0, 0, 0);
 
-			snake();
+			frame->r[2] = snake();
 			singlestep_enable();
 			prog_state = STATE_STOPPED;
 			break;

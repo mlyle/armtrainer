@@ -141,7 +141,7 @@ uint16_t myrand(void) {
     return ((unsigned)(next/65536) % 32768);
 }
 
-void snake(void)
+int snake(void)
 {
     int position_idx = 0;
 
@@ -234,5 +234,6 @@ void snake(void)
     }
 
     matrix_set_callback(prev_keycallback);
-    // XXX halt / thunk back to monitor
+
+    return length;
 }
