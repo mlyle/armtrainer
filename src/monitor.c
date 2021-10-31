@@ -13,6 +13,7 @@
 
 #include <delayutil.h>
 #include <matrix.h>
+#include <console.h>
 
 #include <ctype.h>
 
@@ -22,8 +23,6 @@
 	 __typeof__ (b) _b = (b); \
 	 _a < _b ? _a : _b; })
 #endif
-
-static bool osc_err = false;
 
 #define NELEMENTS(x) (sizeof(x) / sizeof(*(x)))
 
@@ -43,14 +42,10 @@ enum progrun_state {
 } prog_state;
 
 /* State machine for keypad editing addresses/values */
-bool editing_addr = true;
-uint8_t edit_pos = 0;
-uint32_t edit_addr = 0;
-uint32_t edit_val = 0;
-
-uint8_t draw_column;
-uint8_t draw_r = 0x0f, draw_g = 0x0f, draw_b = 0x0f;
-uint8_t draw_bg_r, draw_bg_g, draw_bg_b;
+static bool editing_addr = true;
+static uint8_t edit_pos = 0;
+static uint32_t edit_addr = 0;
+static uint32_t edit_val = 0;
 
 int snake();
 
@@ -165,139 +160,6 @@ void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 
 	if (edit_addr != frame->return_address) {
 		frame->return_address = edit_addr;
-	}
-}
-
-
-#define NUMCOL 17
-
-void console_bs()
-{
-	if (draw_column >= 1)
-	{
-		draw_column--;
-	}
-}
-
-void console_cr()
-{
-	draw_column = 0;
-}
-
-void console_nl()
-{
-	lcd_move_up(13, 53, 3, 3, 3);
-}
-
-void console_char_norefresh(uint8_t c)
-{
-	switch (c)
-	{
-		case 10:
-			console_nl();
-			break;
-		case 13:
-			console_cr();
-			break;
-		case 127:
-		case 8:
-			console_bs();
-			break;
-		case 7: /* bell */
-			lcd_signalerror();
-			break;
-		default:
-			if (draw_column >= NUMCOL) {
-				console_cr();
-				console_nl();
-			}
-
-			lcd_blit_char(c, draw_column*9, 40, draw_r, draw_g, draw_b,
-				draw_bg_r, draw_bg_g, draw_bg_b);
-			draw_column++;
-
-			break;
-	}
-}
-
-void console_char(uint8_t c)
-{
-	console_char_norefresh(c);
-	lcd_refresh();
-}
-
-void console_number_10(uint32_t n)
-{
-	console_cr();
-	console_nl();
-
-	char buf[11];
-
-	char *c = buf+10;
-	*c = 0;
-
-	while (n) {
-		c--;
-		*c = (n % 10) + '0';
-		n /= 10;
-	}
-
-	while (*c) {
-		console_char_norefresh(*c);
-		c++;
-	}
-
-	lcd_refresh();
-}
-
-void console_number_16(uint32_t n)
-{
-	console_cr();
-	console_nl();
-
-	char *str = to_hex32(n);
-	while (*str) {
-		console_char_norefresh(*str);
-		str++;
-	}
-
-	lcd_refresh();
-}
-
-static inline void color_8bit_to_12bit(uint32_t color, uint8_t *r, uint8_t *g, uint8_t *b)
-{
-	*r = (color & 0xc0) >> 4;   /* RR00 0000 -> RR00 */
-	*g = (color & 0x31) >> 2;   /* 00GG G000 -> GGG0 */
-	*b = (color & 0x7) << 1;	/* 0000 0BBB -> BBB0 */
-}
-
-void blit_dot(uint32_t color, uint8_t x, uint8_t y)
-{
-	uint8_t r, g, b;
-	
-	color_8bit_to_12bit(color, &r, &g, &b);
-
-	lcd_blit(x, y, r, g, b);
-}
-
-void blit_icon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr) {
-	uint16_t *lines = (uint16_t *)ret_addr;
-
-	uint8_t r, g, b;
-	
-	color_8bit_to_12bit(color, &r, &g, &b);
-	for (int i = 0; i < 16; i++) {
-		uint16_t tmp = lines[i];
-
-		for (int j = 0; j < 16; j++) {
-			if (tmp & 0x8000) {
-				lcd_blit(x+j, y+i, r, g, b);
-			} else {
-				lcd_blit(x+j, y+i, draw_bg_r, draw_bg_g, draw_bg_b);
-			}
-
-			tmp <<= 1;
-		}
 	}
 }
 
@@ -487,6 +349,7 @@ static void monitor_key_changed(enum matrix_keys key, bool pressed)
 	}
 }
 
+
 void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 {
 	uint8_t *call = (uint8_t *) (frame->return_address - 2);
@@ -530,8 +393,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			break;
 
 		case 0x20:		/* clear top half of screen, position cursor at 0 */
-			lcd_blit_rows(0, 53, 0, 0, 0);
-			draw_column = 0;
+			console_clearscreen();
 			break;		
 		case 0x21:		/* output number in R0 to screen, as denary, newline */
 			console_number_10(frame->r[0]);
@@ -544,21 +406,29 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			console_char(frame->r[0]);
 			break;
 		case 0x24:		/* draw dot at (R1, R2), color R0 */
-			blit_dot(frame->r[0], frame->r[1], frame->r[2]);
+			console_blit_dot(frame->r[0], frame->r[1], frame->r[2]);
 			break;
 		case 0x25:		/* Draw 16x16 (32b) icon following this insn,
 						** at (R1, R2) in color R0
 						*/
-			blit_icon(frame->r[0], frame->r[1], frame->r[2], frame->return_address);
+			console_blit_icon(frame->r[0], frame->r[1], frame->r[2], frame->return_address);
 			frame->return_address += 32;
 			break;
 		
+		case 0x2a:		/* Read denary number from console, store in r0 */
+			frame->r[0] = console_read_number(10);
+			break;
+
+		case 0x2b:		/* Read hex number from console, store in r0 */
+			frame->r[0] = console_read_number(16);
+			break;
+
 		case 0x30:		/* Undocumented for students.  Set color for text. */
-			color_8bit_to_12bit(frame->r[0], &draw_r, &draw_g, &draw_b);
+			console_set_drawcolor(frame->r[0]);
 			break;
 
 		case 0x31:		/* Undocumented for students.  Set bgcolor for text, icons */
-			color_8bit_to_12bit(frame->r[0], &draw_bg_r, &draw_bg_g, &draw_bg_b);
+			console_set_bgcolor(frame->r[0]);
 			break;
 		
 		case 0x40:		/* Undocumented for students: disable single step / run fast */
@@ -575,8 +445,8 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			/* 2053 214e 2241 234b df45 */
 			if ((frame->r[0] != 'S') ||
 					(frame->r[1] != 'N') ||
-					(frame->r[2] != 'A')) {
-				/* Can't easily check r[3] for 'K' */
+					(frame->r[2] != 'A') ||
+					(frame->r[3] != 'K')) {
 				return;
 			}
 
@@ -608,6 +478,8 @@ void code_invoke(uintptr_t addr)
 
 int main()
 {
+	bool osc_err = false;
+
 	RCC_DeInit();
 
 	// Wait for internal oscillator settle.

@@ -1,6 +1,8 @@
 #ifndef _MATRIX_H
 #define _MATRIX_H
 
+#include <stdbool.h>
+
 enum matrix_keys {
 	key_0 = '0',
 	key_1, key_2, key_3, key_4, key_5, key_6, key_7, key_8, key_9,
