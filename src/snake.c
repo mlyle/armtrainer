@@ -5,6 +5,7 @@
 #include <matrix.h>
 #include <delayutil.h>
 #include <stringutil.h>
+#include <randomutil.h>
 
 #define COLOR_SNAKE         0x4f4 // Light green
 #define COLOR_BACKGROUND    0x000 // Black
@@ -135,12 +136,6 @@ static void snake_key_changed(enum matrix_keys key, bool pressed)
     }
 }
 
-uint16_t myrand(void) {
-    static unsigned long next = 1;
-    next = next * 1103515245 + 12345;
-    return ((unsigned)(next/65536) % 32768);
-}
-
 int snake(void)
 {
     int position_idx = 0;
@@ -185,7 +180,7 @@ int snake(void)
 
             // Generate food positions until we find an empty one.
             do {
-                uint16_t rand_num = myrand();
+                uint32_t rand_num = random_next();  // Truncates 64 bit value
                 foodX = rand_num % 31;
                 foodY = rand_num % 9;
             } while (snake_curcolor(foodX, foodY) != COLOR_BACKGROUND);

@@ -12,6 +12,7 @@
 #include <systick_handler.h>
 
 #include <delayutil.h>
+#include <randomutil.h>
 #include <matrix.h>
 #include <console.h>
 
@@ -328,6 +329,8 @@ static void edit_key(enum matrix_keys key)
 
 static void monitor_key_changed(enum matrix_keys key, bool pressed)
 {
+	random_blendseed(systick_cnt);
+
 	if (pressed) {
 		switch (key) {
 			case key_run:
@@ -390,6 +393,10 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 				delay_ms(1000);
 			}
 
+			break;
+
+		case 0x18:		/* Undocumented for students: get a 32 bit random number in r0 */
+			frame->r[0] = random_next();
 			break;
 
 		case 0x20:		/* clear top half of screen, position cursor at 0 */
@@ -570,7 +577,7 @@ int main()
 	}
 
 	lcd_init();
-	lcd_blit_string("MPTrainer V0.1", 0, 1, 15, 15, 0, 0, 0, 0);
+	lcd_blit_string("MPTrainer V0.3", 0, 1, 15, 15, 0, 0, 0, 0);
 	lcd_blit_string("Copyright", 0, 27, 0, 15, 15, 0, 0, 0);
 	lcd_blit_string("2021   M. Lyle", 0, 40, 0, 15, 15, 0, 0, 0);
 	matrix_init();
