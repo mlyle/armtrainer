@@ -10,7 +10,7 @@
 #define COLOR_SNAKE         0x4f4 // Light green
 #define COLOR_BACKGROUND    0x000 // Black
 #define COLOR_FOOD          0xf71 // Orange-ish
-#define COLOR_BORDER        0xf58 // Red-ish
+#define COLOR_BORDER        0xf58 // Purple-ish
 
 #define SNAKE_SCALEFACTOR 5
 
@@ -51,9 +51,9 @@ static void snake_drawborder(uint16_t color)
     uint8_t b = (color) & 0xff;
 
     lcd_blit_horiz(0, 0, 159, r, g, b);
-    lcd_blit_horiz(0, 127, 159, r, g, b);
+    lcd_blit_horiz(0, 49, 159, r, g, b);
     
-    for (int i = 1; i < 127; i++) {
+    for (int i = 1; i < 49; i++) {
         lcd_blit(0, i, r, g, b);
         lcd_blit(159, i, r, g, b);
     }
@@ -74,17 +74,17 @@ static void snake_draw(uint8_t x, uint8_t y, uint16_t color)
         startX = 1;
     }
 
-    if (endX > 159) {
-        endX = 159;
+    if (endX > 158) {
+        endX = 158;
     }
 
     for (int i = 0; i < SNAKE_SCALEFACTOR; i++)
     {
-        if ((y+i) == 0) {
+        if ((y*SNAKE_SCALEFACTOR+i) == 0) {
             continue;
         }
 
-        if ((y+i) == 127) {
+        if ((y*SNAKE_SCALEFACTOR+i) == 49) {
             continue;
         }
 
@@ -158,7 +158,15 @@ int snake(void)
     /* Draw initial food */
     snake_draw(foodX, foodY, COLOR_FOOD);
 
+    lcd_refresh();
+
     matrix_cb_t prev_keycallback = matrix_set_callback(snake_key_changed);
+
+    /* Delay half a beat at the beginning */
+    {
+        uint32_t orig = systick_cnt;
+        while ((systick_cnt - orig) < 125);
+    }
 
     while (true) {
         if ((curX < 0) || (curX > MAXX) || (curY < 0) || (curY > MAXY))
@@ -206,7 +214,7 @@ int snake(void)
         lcd_refresh();
 
         uint32_t orig = systick_cnt;
-        while ((systick_cnt - orig) < 26) {
+        while ((systick_cnt - orig) < 28) {
             matrix_scanall();
         }
 
