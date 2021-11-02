@@ -77,6 +77,11 @@ void console_number_10(uint32_t n)
 	console_cr();
 	console_nl();
 
+    if (!n) {
+        console_char('0');
+        return;
+    }
+    
 	char buf[11];
 
 	char *c = buf+10;
@@ -148,18 +153,14 @@ void console_blit_icon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr)
 	}
 }
 
-void console_set_drawcolor(uint8_t r, uint8_t g, uint8_t b)
+void console_set_drawcolor(uint8_t color)
 {
-    draw_r = r;
-    draw_g = g;
-    draw_b = b;
+    color_8bit_to_12bit(color, &draw_r, &draw_g, &draw_b);
 }
 
-void console_set_bgcolor(uint8_t r, uint8_t g, uint8_t b)
+void console_set_bgcolor(uint8_t color)
 {
-    draw_bg_r = r;
-    draw_bg_g = g;
-    draw_bg_b = b;
+    color_8bit_to_12bit(color, &draw_bg_r, &draw_bg_g, &draw_bg_b);
 }
 
 /* Necessary to be visible to matrix keyboard callback */
@@ -178,7 +179,7 @@ static bool handle_digit(int digit)
 
 	uint64_t new_accum;
 
-	new_accum = read_number_state.accum * read_number_state.base + digit;
+	new_accum = ((uint64_t) read_number_state.accum) * read_number_state.base + digit;
 
 	if (new_accum > UINT32_MAX) {
 		/* Overflow! */
@@ -186,6 +187,7 @@ static bool handle_digit(int digit)
 	}
 
 	read_number_state.accum = new_accum;
+    read_number_state.pos++;
 
 	return true;
 }
@@ -206,13 +208,18 @@ static void read_number_key_changed(enum matrix_keys key, bool pressed)
 				case key_clr:
 					read_number_state.pos--;
 					read_number_state.accum /= read_number_state.base;
+                    console_char(' '); /* Erase cursor if necessary */
+                    console_bs();
 					console_bs();
 					return;
 				
+                case key_store:
 				case key_run:
+                    console_char(' '); /* Erase cursor if necessary */
+                    console_bs();
 					console_cr(); console_nl();
 					read_number_state.finished = true;
-					break;
+					return;
 
 				default:
 					break;

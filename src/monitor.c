@@ -395,8 +395,12 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 
 			break;
 
-		case 0x18:		/* Undocumented for students: get a 32 bit random number in r0 */
-			frame->r[0] = random_next();
+		case 0x18:		/* Undocumented for students: get a 32 bit random number in r0, between 0 and r0 */
+			if (frame->r[0]) {
+				frame->r[0] = random_next() % frame->r[0];
+			} else {
+				frame->r[0] = random_next();
+			}
 			break;
 
 		case 0x20:		/* clear top half of screen, position cursor at 0 */
