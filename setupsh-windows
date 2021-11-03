@@ -2,4 +2,4 @@ export PATH=$PATH\:/mingw64/bin:'/c/Program Files (x86)/GNU Arm Embedded Toolcha
 
 alias vi=vim
 alias make=mingw32-make
-alias flashit="~/Desktop/stink/stlink-1.7.0-x86_64-w64-mingw32/bin/st-flash write build/ef_monitor.bin 0x08004000"
+alias flashit="~/Desktop/stink/stlink-1.7.0-x86_64-w64-mingw32/bin/st-flash write build/ef_monitor.bin 0x08000000"
