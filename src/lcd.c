@@ -274,10 +274,10 @@ void lcd_init()
 
 	// Configure SPI
 
-	lcd_spi->CR1 = SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL |
+	lcd_spi->CR1 = SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL | SPI_CR1_CPHA |
 		(1 << 3 /*SPI_CR1_BR_Pos*/);
 	lcd_spi->CR2 = 0;
-	lcd_spi->CR1 = SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL |
+	lcd_spi->CR1 = SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL | SPI_CR1_CPHA |
 		(1 << 3 /*SPI_CR1_BR_Pos*/) | SPI_CR1_SPE;
 
 	// After 50ms, exit reset
