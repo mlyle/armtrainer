@@ -90,4 +90,9 @@ inc/%cfg.h: %.cfg FORCE
 	echo "const " > $@
 	xxd -i $< >> $@
 
+manual: $(BUILD_DIR)/ARM_Thumb_Manual_Mlyle.pdf
+
+$(BUILD_DIR)/ARM_Thumb_Manual_Mlyle.pdf: FORCE
+	cd arm-manual && pdflatex -output-directory ../$(BUILD_DIR) ARM_Thumb_Manual_Mlyle.tex
+
 FORCE:

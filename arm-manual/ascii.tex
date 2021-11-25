@@ -1,0 +1,206 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                                                    %%
+%%                     A S C I I    wall chart                        %%
+%%                                                                    %%
+%% by Victor Eijkhout                                                 %%
+%% victor@eijkhout.net                                                %%
+%%                                                                    %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Copyright 2009 Victor Eijkhout
+%
+% This work may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either version 1.3
+% of this license or (at your option) any later version.
+% The latest version of this license is in
+%   http://www.latex-project.org/lppl.txt
+% and version 1.3 or later is part of all distributions of LaTeX
+% version 2005/12/01 or later.
+%
+% This work has the LPPL maintenance status `maintained'.
+% 
+% The Current Maintainer of this work is Victor Eijkhout.
+%
+% This work consists of this file.
+%
+%% Choose your favourite format:
+%
+%\nopagenumbers %% 2 lines
+%\vsize=28cm    %% for PLAIN TeX
+%\documentstyle{article}            %% 4 lines for LaTeX
+%\begin{document}                   %% not that it matters anything,
+%\pagestyle{empty}                  %% rest of the document
+%\setlength{\textheight}{28cm}      %% is 'pure' TeX.
+%%%%%% and don't forget the \bye / \end{document} at the end!! %%%%%%%
+%% fonts
+\font\bitfont=cmr10 \fontdimen4\bitfont=3mm
+\font\codefont=cmr7
+\font\namefont=cmss10 scaled 1200
+\font\titlefont=cmss10 scaled 1440
+\font\commentfont=cmss10
+%% counts and dimens
+\newdimen\thinlinewidth \thinlinewidth=.25mm
+\newdimen\fatlinewidth \fatlinewidth=.5mm
+\newdimen\rowheight \rowheight=1cm
+\newdimen\colwidth  \colwidth=1.6cm
+\newdimen\Colwidth \Colwidth=2\colwidth
+  \advance\Colwidth by \thinlinewidth
+\newdimen\topwhite \topwhite=2pt
+\newdimen\botwhite \botwhite=3pt
+\newdimen\leftwhite \leftwhite=2pt
+\newdimen\rightwhite \rightwhite=2pt
+\newcount\rowcount \rowcount=-1 %% note!
+\newcount\colcount \colcount=0
+\newcount\thenumber
+%% tidbits
+\def\\{$\backslash$}
+\def\thinline{\vrule width \thinlinewidth}
+\def\fatline{\vrule width \fatlinewidth}
+\tolerance=10000
+\vbadness=10000
+%% code conversion
+\def\calcnumber{{\multiply\colcount by 16
+                 \advance\colcount by \rowcount
+                 \global\thenumber=\colcount}}
+\def\deccode{\number\thenumber}
+\def\octcode{{\ifnum\thenumber>63
+                            \advance\thenumber by -64
+                            \count0=\thenumber \divide\count0 by 8
+                            1\number\count0
+              \else         \count0=\thenumber \divide\count0 by 8
+                            \ifnum\count0>0 \number\count0 \fi\fi
+              \multiply\count0 by 8
+              \advance\thenumber by -\count0
+              \number\thenumber}}
+\def\hexdigit#1{\ifcase#1 0\or 1\or 2\or 3\or 4\or 5\or 6\or 7\or
+                          8\or 9\or A\or B\or C\or D\or E\or F\or
+                          \edef\tmp{\message{illegal hex digit
+                                        \number#1}}\tmp
+                          \fi}
+\def\hexcode{{\count0=\thenumber \divide\count0 by 16
+              \ifnum\count0>0 \hexdigit{\count0}\fi
+              \multiply\count0 by 16
+              \advance\thenumber by -\count0 \count0=\thenumber
+              \hexdigit{\count0}}}
+%% the heading
+\def\threebit#1#2#3{\vbox to 1.5\rowheight{\bitfont
+                      \vskip\topwhite
+                      \hbox to \colwidth{\hskip\leftwhite#1\hfil}
+                      \vfil
+                      \hbox to \colwidth{\hfil#2\hfil}
+                      \vfil
+                      \hbox to \colwidth{\hfil#3\hskip\rightwhite}
+                      \vskip\botwhite}}
+\def\comment#1{\vbox to \colwidth{\hrule height 0mm depth .25mm
+                      \vfil
+                      \hbox to \Colwidth{\commentfont\hfil#1\hfil}
+                      \vfil}}
+\def\dcomment#1#2{\vbox to \colwidth{\hrule height 0mm depth .25mm
+                      \vfil
+                      \hbox to \Colwidth{\commentfont\hfil#1\hfil}
+                      \vskip \botwhite
+                      \hbox to \Colwidth{\commentfont\hfil#2\hfil}
+                      \vfil}}
+\def\bithead{\vbox to \colwidth{\hsize=1.5\colwidth
+                   \vskip\topwhite
+                   \hbox to \hsize{\commentfont\hfil BITS\hfil}
+                   \vfil
+                   \hbox to \hsize{\bitfont\ b4 b3 b2 b1 }
+                   \vskip\botwhite}}
+%% routines for single chars
+\def\fourbit#1\fb{\vbox to \rowheight{
+                     \vfil
+                     \hbox to 1.5\colwidth{\bitfont #1\ }
+                     \vfil}%
+                  \global\advance\rowcount by 1
+                  \global\colcount=0}
+\def\asc#1\ii{\calcnumber
+              \vbox to \rowheight{\offinterlineskip
+                     \vskip\topwhite
+                     \hbox to \colwidth{\codefont
+                                        \hskip\leftwhite
+                                        \deccode\hfil}
+                     \vfil
+                     \hbox to \colwidth{\vrule width 0cm
+                                              height 10pt depth 2pt
+                                        \namefont
+                                        \hfil#1\hfil}
+                     \vfil
+                     \hbox to \colwidth{\codefont
+                                        \hskip\leftwhite
+                                        \hexcode\hfil %\octcode
+                                        \hskip\rightwhite}
+                     \vskip\botwhite}%
+              \global\advance\colcount by 1}
+%%%%%%%%%%%%%%%%% and now the table itself %%%%%%%%%%%%%%%%%%%%%%%%%
+\vbox{
+\halign{\fatline\fourbit#\fb&\fatline\asc#\ii&\thinline\asc#\ii&
+                     \fatline\asc#\ii&\thinline\asc#\ii&
+                     \fatline\asc#\ii&\thinline\asc#\ii&
+                     \fatline\asc#\ii&\thinline\asc#\ii\fatline\cr
+          \omit&\multispan8 \hskip\thinlinewidth
+                            \titlefont
+                            %ASCII CONTROL CODE CHART
+                            \hfil\cr
+    \noalign{\vskip4mm\hrule}
+          \omit\fatline\hfil\threebit{b7}{b6}{b5}
+                 &\omit\fatline\threebit000&\omit\thinline\threebit001%
+                 &\omit\fatline\threebit010&\omit\thinline\threebit011%
+                 &\omit\fatline\threebit100&\omit\thinline\threebit101%
+                 &\omit\fatline\threebit110&\omit\thinline\threebit111%
+                                                 \fatline\cr
+    \noalign{\vskip-.5mm} %brute force
+          \omit\fatline\bithead
+                 &\omit\fatline\comment{CONTROL}\span\omit
+                 &\omit\fatline\dcomment{SYMBOLS}{NUMBERS}\span\omit
+                 &\omit\fatline\comment{UPPER CASE}\span\omit
+                 &\omit\fatline\comment{LOWER CASE}\span\omit\hfil\fatline\cr
+    \noalign{\hrule}
+      {} 0 0 0 0&NUL&DLE&SP     &0  &@  &P       &` &p  \cr\noalign{\hrule}
+      {} 0 0 0 1&SOH&DC1&!      &1  &A  &Q       &a &q  \cr\noalign{\hrule}
+      {} 0 0 1 0&STX&DC2&"      &2  &B  &R       &b &r  \cr\noalign{\hrule}
+      {} 0 0 1 1&ETX&DC3&\#     &3  &C  &S       &c &s  \cr\noalign{\hrule}
+      {} 0 1 0 0&EOT&DC4&\$     &4  &D  &T       &d &t  \cr\noalign{\hrule}
+      {} 0 1 0 1&ENQ&NAK&\%     &5  &E  &U       &e &u  \cr\noalign{\hrule}
+      {} 0 1 1 0&ACK&SYN&\&     &6  &F  &V       &f &v  \cr\noalign{\hrule}
+      {} 0 1 1 1&BEL&ETB&'      &7  &G  &W       &g &w  \cr\noalign{\hrule}
+      {} 1 0 0 0&BS &CAN&(      &8  &H  &X       &h &x  \cr\noalign{\hrule}
+      {} 1 0 0 1&HT &EM &)      &9  &I  &Y       &i &y  \cr\noalign{\hrule}
+      {} 1 0 1 0&LF &SUB&*      &:  &J  &Z       &j &z  \cr\noalign{\hrule}
+      {} 1 0 1 1&VT &ESC&+      &;  &K  &[       &k &$\{$\cr  \noalign{\hrule}
+      {} 1 1 0 0&FF &FS &,      &$<$&L  &\\      &l &$|$ \cr  \noalign{\hrule}
+      {} 1 1 0 1&CR &GS &$-$    &=  &M  &]       &m &$\}$\cr  \noalign{\hrule}
+      {} 1 1 1 0&SO &RS &.      &$>$&N  &\char94 &n &\char126\cr
+                    \noalign{\hrule}
+      {} 1 1 1 1&SI &US &/      &?  &O  &\_$\!$\_&o &DEL\cr\noalign{\hrule}
+   \noalign{\vskip2mm}
+          \omit&\omit\namefont \hfil LEGEND:\hfil \span\omit
+          &\multispan4\hskip\fatlinewidth
+            \vtop{\vskip-10pt\hbox{\vrule
+             \vbox to \rowheight{
+                 \offinterlineskip
+                 \hrule\vskip \topwhite
+                 \hbox to \colwidth{\codefont\hskip\leftwhite
+                                       dec\hfil}
+                 \vfil
+                 \hbox to \colwidth{\namefont\hfil CHAR\hfil}
+                 \vfil
+                 \hbox to \colwidth{\codefont\hskip\leftwhite
+                                       hex\hfil
+                                       \hskip\rightwhite}
+                 \vskip\botwhite
+                 \hrule                               }%
+                                  \vrule}}
+                      \hfil
+          &\multispan2\bitfont \hskip\fatlinewidth
+                      \vtop{\vskip-8pt\baselineskip=8.5pt
+                            \hbox{Victor Eijkhout}
+                            \rlap{Dept. of Comp. Sci.}
+                            \rlap{University of Tennessee}
+                            \rlap{Knoxville TN 37996, USA}
+                            }\hfil\cr
+          }
+}
+%%%%%%%%%%%%%%%%%%%%%%% and that's it folks! %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\bye          %% PLAIN TeX
+%\end{document} %% LaTeX
