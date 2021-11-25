@@ -30,7 +30,6 @@ static struct position {
     int8_t y;
 } positions[NUMPOSITIONS] = {};
 
-
 static uint16_t snake_curcolor(uint8_t x, uint8_t y)
 {
     uint8_t r, g, b;
@@ -114,20 +113,24 @@ static inline int calc_index(int idx_in)
 
 static void snake_key_changed(enum matrix_keys key, bool pressed)
 {
-    /* XXX prevent doubling back?? */
 	if (pressed) {
 		switch (key) {
 			case key_1:
-                snake_direction = DIR_DOWN;
+            case key_5: /* accept "5" for WASD pattern */
+                if (snake_direction != DIR_UP)
+                    snake_direction = DIR_DOWN;
                 break;
             case key_4:
-                snake_direction = DIR_LEFT;
+                if (snake_direction != DIR_RIGHT)
+                    snake_direction = DIR_LEFT;
                 break;
             case key_6:
-                snake_direction = DIR_RIGHT;
+                if (snake_direction != DIR_LEFT)
+                    snake_direction = DIR_RIGHT;
                 break;
             case key_9:
-                snake_direction = DIR_UP;
+                if (snake_direction != DIR_DOWN)
+                    snake_direction = DIR_UP;
                 break;
             default:
                 lcd_signalerror();
@@ -148,6 +151,7 @@ int snake(void)
     int8_t foodX = MAXX/3, foodY = curY + 2;
 
     int16_t length = 5;
+    int16_t donterase = 0;
 
     /* Clear top of screen */
     snake_clearscreen(COLOR_BACKGROUND);
@@ -183,6 +187,11 @@ int snake(void)
         if ((curX == foodX) && (curY == foodY)) {
             length += 3;
 
+            // Keeping track of a "do not erase" field lets us fix a bug where
+            // erasing past the end of a growing snake could conceal food or
+            // bits of crossing snake.
+            donterase += 2;
+
             char *score = to_hex32(length);
             lcd_blit_string(score, 24, 84, 15, 15, 0, 0, 0, 9);
 
@@ -195,10 +204,14 @@ int snake(void)
 
             snake_draw(foodX, foodY, COLOR_FOOD);
         } else {
-            // erase old position
-            int to_erase = calc_index(position_idx - length);
+            if (!donterase) {
+                // erase old position
+                int to_erase = calc_index(position_idx - length);
 
-            snake_draw(positions[to_erase].x, positions[to_erase].y, COLOR_BACKGROUND);
+                snake_draw(positions[to_erase].x, positions[to_erase].y, COLOR_BACKGROUND);
+            } else {
+                donterase--;
+            }
         }
 
         // append to snake queue/list

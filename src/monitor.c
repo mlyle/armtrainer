@@ -463,7 +463,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 
 			singlestep_disable();
 			lcd_blit_string("snake!!!", 24, 58, 0, 0, 0, 4, 15, 4);
-			lcd_blit_string("use 1469", 24, 71, 4, 15, 4, 0, 0, 0);
+			lcd_blit_string("use 4569", 24, 71, 4, 15, 4, 0, 0, 0);
 
 			frame->r[2] = snake();
 			singlestep_enable();
