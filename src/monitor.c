@@ -75,11 +75,16 @@ void DebugMon_Handler(void)
 			"b DebugMon_Handler_c \n");
 }
 
-static inline void blit_cursor(int x, int y)
+static inline void clear_cursor(int y)
 {
 	lcd_blit_horiz(0, y, 159, 0, 0, 0);
 	lcd_blit_horiz(0, y+1, 159, 0, 0, 0);
 	lcd_blit_horiz(0, y+2, 159, 0, 0, 0);
+}
+
+static inline void blit_cursor(int x, int y)
+{
+	clear_cursor(y);
 	lcd_blit_horiz(x+3, y, x+5, 15, 0, 0);
 	lcd_blit_horiz(x+2, y+1, x+6, 15, 0, 0);
 	lcd_blit_horiz(x, y+2, x+8, 15, 0, 0);
@@ -97,10 +102,14 @@ static inline void blit_addrval()
 
 	lcd_blit_string(mnem, 123, 112, 15, 15, 15, 0, 0, 0);
 
-	if (editing_addr) {
-		blit_cursor(9*edit_pos, 125);
+	if (prog_state == STATE_STOPPED) {
+		if (editing_addr) {
+			blit_cursor(9*edit_pos, 125);
+		} else {
+			blit_cursor(72 + 9*(edit_pos-4), 125);
+		}
 	} else {
-		blit_cursor(72 + 9*(edit_pos-4), 125);
+		clear_cursor(125);
 	}
 }
 
