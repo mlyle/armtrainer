@@ -63,11 +63,11 @@ LDFLAGS += -Tshared/stm32f411.ld
 
 all: build/ef_monitor.bin
 
-flash: build/ef_monitor.bin
-	openocd -f /usr/local/share/openocd/scripts/interface/stlink-v2.cfg -f /usr/local/share/openocd/scripts/target/stm32f4x.cfg -f flash.cfg
-
 build/ef_monitor.bin: build/monitor.bin
 	cat build/monitor.bin > $@
+
+flash: build/ef_monitor.bin
+	openocd -f /opt/homebrew/share/openocd/scripts/interface/stlink.cfg -f /opt/homebrew/share/openocd/scripts/target/stm32f4x.cfg -c "program build/ef_monitor.bin verify reset exit 0x08000000"
 
 %.bin: %
 	$(ARM_SDK_PREFIX)objcopy -O binary $< $@
