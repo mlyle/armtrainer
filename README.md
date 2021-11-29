@@ -12,3 +12,20 @@ ARM-Thumb machine code was a fairly ideal architecture for students to learn, be
 * It has a reasonable number of general purpose registers.
 * A fixed-length, relatively simple encoding avoids unnecessary complexity.
 
+## Example Program
+
+By a student, Robin K:
+
+    20000000	DF20		(clear screen)
+    20000002	2001		(mov r0, #1)
+    20000004	2102		(mov r1, #1)
+    20000006	180A		(add r2, r0, r1)
+    20000008	DF21		(print contents of register 0)
+    2000000A	4608		(mov r0, r1)
+    2000000C	4611		(mov r1, r2)
+    2000000E	E7FA		(b 20000006)
+
+## TODO
+
+* It would be nice to use SPI DMA to update the screen.  This would improve performance a little, and it would also mean we'd spend more time scanning the keyboard for input and not risk losing keystrokes.
+* It would be nice to scan the keyboard smarter to detect interrupts using less tie.  We could e.g. enable *all* output rows and then see if any lines change.
