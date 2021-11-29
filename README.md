@@ -28,4 +28,7 @@ By a student, Robin K:
 ## TODO
 
 * It would be nice to use SPI DMA to update the screen.  This would improve performance a little, and it would also mean we'd spend more time scanning the keyboard for input and not risk losing keystrokes.
-* It would be nice to scan the keyboard smarter to detect interrupts using less tie.  We could e.g. enable *all* output rows and then see if any lines change.
+* It would be nice to scan the keyboard smarter to detect interrupts usin$g less tie.  We could e.g. enable *all* output rows and then see if any lines change.
+* Relative branches were difficult for students to compute.  Finding a better way to explain this, in both lessons and manuals, would be helpful.
+* The manual should be updated with some of the system calls that have not been documented.
+* Upload overall curriculum, etc, should get posted here.
