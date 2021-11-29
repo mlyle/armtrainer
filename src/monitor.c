@@ -146,7 +146,7 @@ static inline void blit_registers(struct ContextStateFrame_s *frame)
 
 void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 {
-	if ((frame->return_address & 0xff000000) != 0x08000000) {
+	if ((frame->return_address & 0xff000000) == 0x08000000) {
 		return;
 	}
 
