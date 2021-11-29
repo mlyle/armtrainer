@@ -144,6 +144,38 @@ static inline void blit_registers(struct ContextStateFrame_s *frame)
 	blit_flag(frame->xpsr & 0x10000000, 150, 62, 'v');
 }
 
+static bool address_valid_for_write()
+{
+	if (edit_addr & 1) {
+		return false;
+	}
+
+	if ((edit_addr & 0xffff8000) == 0x20000000) {
+		return true;
+	}
+
+	return false;
+}
+
+static bool address_valid_for_read()
+{
+	if (address_valid_for_write()) {
+		return true;
+	}
+
+
+	if ((edit_addr & 0xffff0000) == 0x20000000) {
+		return true;
+	}
+
+	if ((edit_addr & 0xffc0000) == 0x08000000) {
+		return true;
+	}
+
+	return false;
+}
+
+
 void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 {
 	if ((frame->return_address & 0xff000000) == 0x08000000) {
@@ -151,7 +183,12 @@ void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 	}
 
 	edit_addr = frame->return_address;
-	edit_val = *((uint16_t *) edit_addr);
+
+	if (address_valid_for_read(edit_addr)) {
+		edit_val = *((uint16_t *) edit_addr);
+	} else {
+		edit_val = 0x0BAD;
+	}
 
 	editing_addr = true;
 	edit_pos = 0;
@@ -204,37 +241,6 @@ static void edit_key_digit(int digit)
 	if (edit_pos > 7) {
 		edit_pos = 7;
 	}
-}
-
-static bool address_valid_for_write()
-{
-	if (edit_addr & 1) {
-		return false;
-	}
-
-	if ((edit_addr & 0xffff8000) == 0x20000000) {
-		return true;
-	}
-
-	return false;
-}
-
-static bool address_valid_for_read()
-{
-	if (address_valid_for_write()) {
-		return true;
-	}
-
-
-	if ((edit_addr & 0xffff0000) == 0x20000000) {
-		return true;
-	}
-
-	if ((edit_addr & 0xffc0000) == 0x08000000) {
-		return true;
-	}
-
-	return false;
 }
 
 static void perform_load(bool repeated)
