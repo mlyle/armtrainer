@@ -33,6 +33,6 @@ static void systick_handler()
 	systick_cnt++;
 }
 
-const void *_systick_vector __attribute((section(".systick_vector"))) = systick_handler;
+void * const _systick_vector __attribute((section(".systick_vector"))) = systick_handler;
 
 volatile uint32_t systick_cnt;

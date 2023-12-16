@@ -75,7 +75,7 @@ void SVCall_Handler() __attribute__((weak));
 void DebugMon_Handler() __attribute__((weak));
 
 /* This ends one early, so other code can provide systick handler */
-const void *_vectors[] __attribute((section(".vectors"))) =
+void * const _vectors [] __attribute((section(".vectors"))) =
 {
 	&_stack_top,
 	_start,
