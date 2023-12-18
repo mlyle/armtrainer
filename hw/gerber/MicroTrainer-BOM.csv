@@ -36,5 +36,5 @@ Comment,Designator,Footprint,LCSC
 "KEY_9","SW8","Button_Switch_Keyboard:SW_Cherry_MX_1.00u_PCB",""
 "KEY_A","SW9","Button_Switch_Keyboard:SW_Cherry_MX_1.00u_PCB",""
 "LP5907MFX-3.3","U1","Package_TO_SOT_SMD:SOT-23-5","C80670"
-"STM32F411R_C-E_Tx","U3","Package_QFP:LQFP-64_10x10mm_P0.5mm","C89374"
+"STM32F412RETx","U3","Package_QFP:LQFP-64_10x10mm_P0.5mm","C89374"
 "25MHz","Y1","Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm","C9006"
