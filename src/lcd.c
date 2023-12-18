@@ -5,6 +5,9 @@
 #include <font8x13.h>
 #include <stm32f4xx.h>
 
+/* For ST7735S 160x128 display */
+
+
 static DIOTag_t lcd_rst = GPIOB_DIO(7);
 static DIOTag_t lcd_cs = GPIOB_DIO(10);
 static DIOTag_t lcd_a0 = GPIOB_DIO(6);
@@ -12,7 +15,22 @@ static DIOTag_t lcd_mosi = GPIOB_DIO(15); // AF05
 static DIOTag_t lcd_sck = GPIOB_DIO(13);  // AF05
 static SPI_TypeDef *lcd_spi = SPI2;
 
+/* DMA1 Stream 4 Channel 0: SPI TX */
+static DMA_Stream_TypeDef *lcd_dma_stream = DMA1_Stream4;
+static const uint32_t lcd_dma_channel = DMA_Channel_0;
+static const uint32_t lcd_dma_tcif = DMA_FLAG_TCIF4;
+static const uint32_t lcd_dma_flags = DMA_FLAG_FEIF4 | DMA_FLAG_DMEIF4 |
+		DMA_FLAG_TEIF4 | DMA_FLAG_HTIF4 | lcd_dma_tcif;
+
+static uint32_t lcd_framecount;
+
 static uint8_t lcd_fbuf[160*128*3/2];
+
+static inline void lcd_spi_waitcompletion()
+{
+	while (!(lcd_spi->SR & SPI_SR_TXE));
+	while ((lcd_spi->SR & SPI_SR_BSY));
+}
 
 static inline void lcd_send_command(uint8_t cmd)
 {
@@ -23,9 +41,7 @@ static inline void lcd_send_command(uint8_t cmd)
 	delay_loop(100);
 	lcd_spi->DR = cmd; // send SPI
 
-	// and wait for completion
-	while (!(lcd_spi->SR & SPI_SR_TXE));
-	while ((lcd_spi->SR & SPI_SR_BSY));
+	lcd_spi_waitcompletion();
 
 	delay_loop(100);
 	DIOHigh(lcd_cs);
@@ -40,9 +56,7 @@ void lcd_send_data(uint8_t data)
 	delay_loop(100);
 	lcd_spi->DR = data; // send SPI
 
-	// and wait for completion
-	while (!(lcd_spi->SR & SPI_SR_TXE));
-	while ((lcd_spi->SR & SPI_SR_BSY));
+	lcd_spi_waitcompletion();
 	delay_loop(100);
 	DIOHigh(lcd_cs);
 }
@@ -73,6 +87,33 @@ static inline void lcd_send_data_singlecolor(uint8_t r, uint8_t g, uint8_t b, in
 	DIOHigh(lcd_cs);
 }
 
+static inline void lcd_setup_dma(uint8_t *data, int len)
+{
+	uintptr_t raw_src = (uintptr_t) data;
+
+	DMA_ClearFlag(lcd_dma_stream, lcd_dma_flags);
+	DMA_DeInit(lcd_dma_stream);
+	DMA_Cmd(lcd_dma_stream, DISABLE);
+
+	DMA_InitTypeDef dma_init = {};
+
+	dma_init.DMA_Channel = lcd_dma_channel;
+	dma_init.DMA_PeripheralBaseAddr = (uintptr_t) &lcd_spi->DR;
+	dma_init.DMA_Memory0BaseAddr = raw_src;
+	dma_init.DMA_DIR = DMA_DIR_MemoryToPeripheral;
+	dma_init.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	dma_init.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+	dma_init.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	dma_init.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+	dma_init.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+	dma_init.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+
+	DMA_Init(lcd_dma_stream, &dma_init);
+	DMA_FlowControllerConfig(lcd_dma_stream, DMA_FlowCtrl_Peripheral);
+
+	DMA_Cmd(lcd_dma_stream, ENABLE);
+}
+
 static inline void lcd_send_data_bulk(uint8_t *data, int len)
 {
 	delay_loop(100);
@@ -80,15 +121,18 @@ static inline void lcd_send_data_bulk(uint8_t *data, int len)
 	delay_loop(100);
 	DIOLow(lcd_cs);
 	delay_loop(100);
+
+	lcd_setup_dma(data, len);
+
+#if 0
 	for (int i = 0; i< len; i++) {
 		lcd_spi->DR = data[i]; // send SPI
 
-		// and wait for completion
-		while (!(lcd_spi->SR & SPI_SR_TXE));
-		while ((lcd_spi->SR & SPI_SR_BSY));
+		lcd_spi_waitcompletion();
 	}
 	delay_loop(100);
 	DIOHigh(lcd_cs);
+#endif
 }
 
 static inline void lcd_blit_internal(int x, int y, uint8_t r, uint8_t g, uint8_t b)
@@ -195,13 +239,35 @@ int lcd_blit_string(char *str, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 	return x;
 }
 
+static inline void lcd_dma_wait_finish()
+{
+	if (DMA_GetCmdStatus(lcd_dma_stream) == DISABLE) {
+		return;
+	}
+
+	while (DMA_GetFlagStatus(lcd_dma_stream, lcd_dma_tcif) == RESET);
+
+	lcd_spi_waitcompletion();
+
+	delay_loop(100);
+	DIOHigh(lcd_cs);
+}
+
 void lcd_refresh()
 {
+	lcd_dma_wait_finish();
+
+	if (!((++lcd_framecount) & 15)) {
+		lcd_send_command(0x2c);		// Ram WRITE command
+	}
+
 	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
 }
 
 void lcd_signalerror()
 {
+	lcd_dma_wait_finish();
+
 	lcd_send_data_singlecolor(15, 3, 3, sizeof(lcd_fbuf));
 
 	delay_ms(45);
@@ -267,7 +333,7 @@ void lcd_init()
 {
 	// Initially, in reset.
 	DIOSetOutput(lcd_rst, false, DIO_DRIVE_STRONG, false);
-	DIOSetOutput(lcd_cs, false, DIO_DRIVE_STRONG, true); // XXX not selected, right?
+	DIOSetOutput(lcd_cs, false, DIO_DRIVE_STRONG, true); // (not selected)
 	DIOSetOutput(lcd_a0, false, DIO_DRIVE_WEAK, true);
 	DIOSetAltfuncOutput(lcd_mosi, 5, false, DIO_DRIVE_STRONG);
 	DIOSetAltfuncOutput(lcd_sck, 5, false, DIO_DRIVE_STRONG);
@@ -293,28 +359,28 @@ void lcd_init()
 
 	lcd_send_command(0x36);		// set orientation / scan directions
 	lcd_send_data(0x60);
-	
+
 	lcd_send_command(0x3a);
-	lcd_send_data(0x03);		// selects reduced 4/4/4 data XXX
+	lcd_send_data(0x03);		// selects reduced 4/4/4 data
 
 	lcd_send_command(0x26);
 	lcd_send_data(0x04);		// Hopefully select a reasonable gamma
 
-	lcd_send_command(0x29);
+	lcd_send_command(0x29);		// Display on
 
-	lcd_send_command(0x2a);
+	lcd_send_command(0x2a);		// Column addresses -- 0 .. 159
 	lcd_send_data(0);
 	lcd_send_data(0);
 	lcd_send_data(0);
 	lcd_send_data(159);
 
-	lcd_send_command(0x2b);
+	lcd_send_command(0x2b);		// Row addresses -- 0 .. 127
 	lcd_send_data(0);
 	lcd_send_data(0);
 	lcd_send_data(0);
 	lcd_send_data(127);
 
-	lcd_send_command(0x2c);
+	lcd_send_command(0x2c);		// Ram WRITE command
 
 	/* Draw black screen */
 	lcd_refresh();

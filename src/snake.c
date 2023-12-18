@@ -68,7 +68,7 @@ static void snake_draw(uint8_t x, uint8_t y, uint16_t color)
     uint8_t startX = x*SNAKE_SCALEFACTOR;
     uint8_t endX = (x+1)*SNAKE_SCALEFACTOR - 1;
 
-    /* These 4 conditionals protect the border of the field */
+    /* These conditionals protect the border of the field */
     if (startX == 0) {
         startX = 1;
     }
