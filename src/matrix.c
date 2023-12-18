@@ -5,19 +5,19 @@
 #define NELEMENTS(x) (sizeof(x) / sizeof(*(x)))
 
 static DIOTag_t matrix_outps[] = {
-	GPIOA_DIO(15),
-	GPIOA_DIO(12),
-	GPIOA_DIO(11),
-	GPIOA_DIO(10),
-	GPIOA_DIO(9),
-	GPIOA_DIO(8),
+	GPIOA_DIO(5),
+	GPIOA_DIO(4),
+	GPIOA_DIO(3),
+	GPIOA_DIO(2),
+	GPIOA_DIO(1),
+	GPIOA_DIO(0),
 };
 
 static DIOTag_t matrix_inps[] = {
-	GPIOB_DIO(6),
-	GPIOB_DIO(5),
-	GPIOB_DIO(4),
-	GPIOB_DIO(3),
+	GPIOC_DIO(6),
+	GPIOC_DIO(7),
+	GPIOC_DIO(8),
+	GPIOC_DIO(9),
 };
 
 static uint8_t outp_statuses[NELEMENTS(matrix_outps)];

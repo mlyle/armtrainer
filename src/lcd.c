@@ -5,9 +5,9 @@
 #include <font8x13.h>
 #include <stm32f4xx.h>
 
-static DIOTag_t lcd_rst = GPIOC_DIO(15);
-static DIOTag_t lcd_cs = GPIOB_DIO(9);
-static DIOTag_t lcd_a0 = GPIOC_DIO(14);
+static DIOTag_t lcd_rst = GPIOB_DIO(7);
+static DIOTag_t lcd_cs = GPIOB_DIO(10);
+static DIOTag_t lcd_a0 = GPIOB_DIO(6);
 static DIOTag_t lcd_mosi = GPIOB_DIO(15); // AF05
 static DIOTag_t lcd_sck = GPIOB_DIO(13);  // AF05
 static SPI_TypeDef *lcd_spi = SPI2;
