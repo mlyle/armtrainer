@@ -440,6 +440,13 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			console_blit_icon(frame->r[0], frame->r[1], frame->r[2], frame->return_address);
 			frame->return_address += 32;
 			break;
+		case 0x26:		/* Draw 16x16 (32b) icon following this insn,
+					** at (R1, R2) in color R0;
+					** transparent background
+					*/
+			console_blit_icon_transparent(frame->r[0], frame->r[1], frame->r[2], frame->return_address);
+			frame->return_address += 32;
+			break;
 
 		case 0x2a:		/* Read denary number from console, store in r0 */
 			frame->r[0] = console_read_number(10);

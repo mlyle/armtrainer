@@ -131,7 +131,7 @@ void console_blit_dot(uint32_t color, uint8_t x, uint8_t y)
 	lcd_blit(x, y, r, g, b);
 }
 
-void console_blit_icon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr)
+static inline void console_blit_icon_impl(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr, int transparent)
 {
 	uint16_t *lines = (uint16_t *)ret_addr;
 
@@ -145,12 +145,24 @@ void console_blit_icon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr)
 			if (tmp & 0x8000) {
 				lcd_blit(x+j, y+i, r, g, b);
 			} else {
-				lcd_blit(x+j, y+i, draw_bg_r, draw_bg_g, draw_bg_b);
+				if (!transparent) {
+					lcd_blit(x+j, y+i, draw_bg_r, draw_bg_g, draw_bg_b);
+				}
 			}
 
 			tmp <<= 1;
 		}
 	}
+}
+
+void console_blit_icon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr)
+{
+	console_blit_icon_impl(color, x, y, ret_addr, 0);
+}
+
+void console_blit_icon_transparent(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr)
+{
+	console_blit_icon_impl(color, x, y, ret_addr, 1);
 }
 
 void console_set_drawcolor(uint8_t color)
@@ -253,6 +265,10 @@ uint32_t console_read_number(uint8_t base)
 	int iter = 0;
 
 	do {
+		/* XXX: need a way to escape from this if a student is
+		 * "running" a program with this in a tight loop
+		 */
+
 		/* Print cursor and move position left */
 		if (iter % 2) { 
 			console_char('_');
