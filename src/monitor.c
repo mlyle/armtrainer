@@ -35,6 +35,12 @@ struct __attribute__((packed)) ContextStateFrame_s {
 	uint32_t xpsr;
 };
 
+struct __attribute__((packed)) EnhancedContextStateFrame_s {
+	struct ContextStateFrame_s csf;
+
+	uint32_t rh[4];
+};
+
 /* Single step state machine */
 enum progrun_state {
 	STATE_STOPPED,
@@ -72,7 +78,9 @@ void DebugMon_Handler(void)
 			"ite eq \n"
 			"mrseq r0, msp \n"
 			"mrsne r0, psp \n"
-			"b DebugMon_Handler_c \n");
+			"push {r4, r5, r6, r7, lr} \n"
+			"bl DebugMon_Handler_c \n"
+			"pop {r4, r5, r6, r7, pc} \n");
 }
 
 static inline void clear_cursor(int y)
@@ -128,20 +136,22 @@ static inline void blit_flag(int flag, int x, int y, char f)
 	}
 }
 
-static inline void blit_registers(struct ContextStateFrame_s *frame)
+static inline void blit_registers(struct EnhancedContextStateFrame_s *frame)
 {
 	for (int i=0; i<4; i++) {
 		char regn[3]={ 'r', '0'+i, '\0' };
-		char *reg_val = to_hex32(frame->r[i]);
+		char *reg_val = to_hex32(frame->csf.r[i]);
 
 		lcd_blit_string(regn, 0, 58+i*13, 15, 2, 2, 0, 0, 0);
 		lcd_blit_string(reg_val, 24, 58+i*13, 15, 15, 15, 5, 0 ,0);
 	}
 
-	blit_flag(frame->xpsr & 0x80000000, 123, 62, 'n');
-	blit_flag(frame->xpsr & 0x40000000, 132, 62, 'z');
-	blit_flag(frame->xpsr & 0x20000000, 141, 62, 'c');
-	blit_flag(frame->xpsr & 0x10000000, 150, 62, 'v');
+	uint32_t xpsr = frame->csf.xpsr;
+
+	blit_flag(xpsr & 0x80000000, 123, 62, 'n');
+	blit_flag(xpsr & 0x40000000, 132, 62, 'z');
+	blit_flag(xpsr & 0x20000000, 141, 62, 'c');
+	blit_flag(xpsr & 0x10000000, 150, 62, 'v');
 }
 
 static bool address_valid_for_write()
@@ -176,13 +186,13 @@ static bool address_valid_for_read()
 }
 
 
-void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
+void DebugMon_Handler_c(struct EnhancedContextStateFrame_s *frame)
 {
-	if ((frame->return_address & 0xff000000) == 0x08000000) {
+	if ((frame->csf.return_address & 0xff000000) == 0x08000000) {
 		return;
 	}
 
-	edit_addr = frame->return_address;
+	edit_addr = frame->csf.return_address;
 
 	if (address_valid_for_read(edit_addr)) {
 		edit_val = *((uint16_t *) edit_addr);
@@ -205,8 +215,8 @@ void DebugMon_Handler_c(struct ContextStateFrame_s *frame)
 		prog_state = STATE_STOPPED;
 	}
 
-	if (edit_addr != frame->return_address) {
-		frame->return_address = edit_addr;
+	if (edit_addr != frame->csf.return_address) {
+		frame->csf.return_address = edit_addr;
 	}
 }
 
