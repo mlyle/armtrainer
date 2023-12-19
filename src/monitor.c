@@ -136,30 +136,42 @@ static inline void blit_flag(int flag, int x, int y, char f)
 	}
 }
 
-static inline void blit_register(int lineno, int regnum, uint32_t val)
+static inline void blit_register_name(int lineno, const char *regn,
+		uint32_t val)
 {
-	char regn[3]={ 'r', '0'+regnum, '\0' };
 	char *reg_val = to_hex32(val);
 
 	lcd_blit_string(regn, 0, 58+lineno*13, 15, 2, 2, 0, 0, 0);
 	lcd_blit_string(reg_val, 24, 58+lineno*13, 15, 15, 15, 5, 0 ,0);
 }
 
-static inline void blit_registers(struct EnhancedContextStateFrame_s *frame,
-		int hi)
+static inline void blit_register(int lineno, int regnum, uint32_t val)
 {
-	if (!hi) {
+	char regn[3]={ 'r', '0'+regnum, '\0' };
+
+	blit_register_name(lineno, regn, val);
+}
+
+static inline void blit_registers(struct EnhancedContextStateFrame_s *frame,
+		int what_to_show)
+{
+	uint32_t xpsr = frame->csf.xpsr;
+
+	if (what_to_show == 0) {
 		for (int i=0; i<4; i++) {
 			blit_register(i, i, frame->csf.r[i]);
 		}
-	} else {
+	} else if (what_to_show == 1) {
 		/* Display registers r4-r7 instead */
 		for (int i=0; i<4; i++) {
 			blit_register(i, i+4, frame->rh[i]);
 		}
+	} else {
+		blit_register_name(0, "12", frame->csf.r12);
+		blit_register_name(1, "lr", frame->csf.lr);
+		blit_register_name(2, "rt", frame->csf.return_address);
+		blit_register_name(3, "xp", xpsr);
 	}
-
-	uint32_t xpsr = frame->csf.xpsr;
 
 	blit_flag(xpsr & 0x80000000, 123, 62, 'n');
 	blit_flag(xpsr & 0x40000000, 132, 62, 'z');
