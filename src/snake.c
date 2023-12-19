@@ -25,11 +25,6 @@ static enum snake_direction_e {
     DIR_DOWN
 } snake_direction = DIR_RIGHT;
 
-static struct position {
-    int8_t x;
-    int8_t y;
-} positions[NUMPOSITIONS] = {};
-
 static uint16_t snake_curcolor(uint8_t x, uint8_t y)
 {
     uint8_t r, g, b;
@@ -142,6 +137,10 @@ static void snake_key_changed(enum matrix_keys key, bool pressed)
 int snake(void)
 {
     int position_idx = 0;
+    static struct position {
+	    int8_t x;
+	    int8_t y;
+    } positions[NUMPOSITIONS] = {};
 
     snake_direction = DIR_RIGHT;
 

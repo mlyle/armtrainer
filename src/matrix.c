@@ -24,7 +24,6 @@ static uint8_t outp_statuses[NELEMENTS(matrix_outps)];
 
 static matrix_cb_t matrix_callback;
 
-
 /* This is the keymap rotated 90 degrees CCW */
 static const enum matrix_keys keymap[NELEMENTS(matrix_inps) * NELEMENTS(matrix_outps)] = {
 	key_0, key_4, key_8, key_c,
