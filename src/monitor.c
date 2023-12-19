@@ -435,12 +435,12 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			console_blit_dot(frame->r[0], frame->r[1], frame->r[2]);
 			break;
 		case 0x25:		/* Draw 16x16 (32b) icon following this insn,
-						** at (R1, R2) in color R0
-						*/
+					** at (R1, R2) in color R0
+					*/
 			console_blit_icon(frame->r[0], frame->r[1], frame->r[2], frame->return_address);
 			frame->return_address += 32;
 			break;
-		
+
 		case 0x2a:		/* Read denary number from console, store in r0 */
 			frame->r[0] = console_read_number(10);
 			break;
@@ -456,7 +456,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 		case 0x31:		/* Undocumented for students.  Set bgcolor for text, icons */
 			console_set_bgcolor(frame->r[0]);
 			break;
-		
+
 		case 0x40:		/* Undocumented for students: disable single step / run fast */
 			singlestep_disable();
 			break;
@@ -492,14 +492,14 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 void code_invoke(uintptr_t addr)
 {
 	asm volatile(
-		"MOV r0, #0\n"
-		"MOV r1, #0\n"
-		"MOV r2, #0\n"
-		"MOV r3, %[addr]\n"
-		"MOV r7, %[addr]\n"
-		"MOV PC, %[addr]\n" 
-		: : [addr]"r"(addr)
-		: "r0", "r1", "r2", "r3", "r7" );
+			"MOV r0, #0\n"
+			"MOV r1, #0\n"
+			"MOV r2, #0\n"
+			"MOV r3, %[addr]\n"
+			"MOV r7, %[addr]\n"
+			"MOV PC, %[addr]\n"
+			: : [addr]"r"(addr)
+			: "r0", "r1", "r2", "r3", "r7" );
 }
 
 int main()
