@@ -53,7 +53,7 @@ void console_char_norefresh(uint8_t c)
 			}
 
 			lcd_blit_char(c, draw_column*9, 40, draw_r, draw_g, draw_b,
-				draw_bg_r, draw_bg_g, draw_bg_b);
+					draw_bg_r, draw_bg_g, draw_bg_b);
 			draw_column++;
 
 			break;
@@ -68,8 +68,8 @@ void console_char(uint8_t c)
 
 void console_clearscreen()
 {
-    lcd_blit_rows(0, 53, 0, 0, 0);
-    draw_column = 0;
+	lcd_blit_rows(0, 53, 0, 0, 0);
+	draw_column = 0;
 }
 
 void console_number_10(uint32_t n)
@@ -77,11 +77,11 @@ void console_number_10(uint32_t n)
 	console_cr();
 	console_nl();
 
-    if (!n) {
-        console_char('0');
-        return;
-    }
-    
+	if (!n) {
+		console_char('0');
+		return;
+	}
+
 	char buf[11];
 
 	char *c = buf+10;
@@ -125,7 +125,7 @@ static inline void color_8bit_to_12bit(uint32_t color, uint8_t *r, uint8_t *g, u
 void console_blit_dot(uint32_t color, uint8_t x, uint8_t y)
 {
 	uint8_t r, g, b;
-	
+
 	color_8bit_to_12bit(color, &r, &g, &b);
 
 	lcd_blit(x, y, r, g, b);
@@ -136,7 +136,7 @@ void console_blit_icon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr)
 	uint16_t *lines = (uint16_t *)ret_addr;
 
 	uint8_t r, g, b;
-	
+
 	color_8bit_to_12bit(color, &r, &g, &b);
 	for (int i = 0; i < 16; i++) {
 		uint16_t tmp = lines[i];
@@ -155,12 +155,12 @@ void console_blit_icon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr)
 
 void console_set_drawcolor(uint8_t color)
 {
-    color_8bit_to_12bit(color, &draw_r, &draw_g, &draw_b);
+	color_8bit_to_12bit(color, &draw_r, &draw_g, &draw_b);
 }
 
 void console_set_bgcolor(uint8_t color)
 {
-    color_8bit_to_12bit(color, &draw_bg_r, &draw_bg_g, &draw_bg_b);
+	color_8bit_to_12bit(color, &draw_bg_r, &draw_bg_g, &draw_bg_b);
 }
 
 /* Necessary to be visible to matrix keyboard callback */
@@ -187,7 +187,7 @@ static bool handle_digit(int digit)
 	}
 
 	read_number_state.accum = new_accum;
-    read_number_state.pos++;
+	read_number_state.pos++;
 
 	return true;
 }
@@ -208,15 +208,15 @@ static void read_number_key_changed(enum matrix_keys key, bool pressed)
 				case key_clr:
 					read_number_state.pos--;
 					read_number_state.accum /= read_number_state.base;
-                    console_char(' '); /* Erase cursor if necessary */
-                    console_bs();
+					console_char(' '); /* Erase cursor if necessary */
+					console_bs();
 					console_bs();
 					return;
-				
-                case key_store:
+
+				case key_store:
 				case key_run:
-                    console_char(' '); /* Erase cursor if necessary */
-                    console_bs();
+					console_char(' '); /* Erase cursor if necessary */
+					console_bs();
 					console_cr(); console_nl();
 					read_number_state.finished = true;
 					return;
@@ -265,9 +265,9 @@ uint32_t console_read_number(uint8_t base)
 		console_bs();
 
 		uint32_t orig = systick_cnt;
-        while ((systick_cnt - orig) < 10) {
-            matrix_scanall();
-        }
+		while ((systick_cnt - orig) < 10) {
+			matrix_scanall();
+		}
 
 	} while (!read_number_state.finished);
 
