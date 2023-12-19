@@ -1,4 +1,4 @@
-_stack_top = 0x20010000;
+_stack_top = ORIGIN(RAM) + LENGTH(RAM);
 
 SECTIONS
 {
