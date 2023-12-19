@@ -136,11 +136,18 @@ static void snake_key_changed(enum matrix_keys key, bool pressed)
 
 int snake(void)
 {
-    int position_idx = 0;
-    static struct position {
-	    int8_t x;
-	    int8_t y;
-    } positions[NUMPOSITIONS] = {};
+	int position_idx = 0;
+	static struct position {
+		int8_t x;
+		int8_t y;
+	} positions[NUMPOSITIONS] = {};
+
+	int position_idx = 0;
+	struct position {
+		int8_t x;
+		int8_t y;
+	} positions[NUMPOSITIONS] = {};
+>>>>>>> 313fc1f (asdjkaskdjaskjkdjsa)
 
     snake_direction = DIR_RIGHT;
 
