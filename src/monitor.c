@@ -136,14 +136,27 @@ static inline void blit_flag(int flag, int x, int y, char f)
 	}
 }
 
-static inline void blit_registers(struct EnhancedContextStateFrame_s *frame)
+static inline void blit_register(int lineno, int regnum, uint32_t val)
 {
-	for (int i=0; i<4; i++) {
-		char regn[3]={ 'r', '0'+i, '\0' };
-		char *reg_val = to_hex32(frame->csf.r[i]);
+	char regn[3]={ 'r', '0'+regnum, '\0' };
+	char *reg_val = to_hex32(val);
 
-		lcd_blit_string(regn, 0, 58+i*13, 15, 2, 2, 0, 0, 0);
-		lcd_blit_string(reg_val, 24, 58+i*13, 15, 15, 15, 5, 0 ,0);
+	lcd_blit_string(regn, 0, 58+lineno*13, 15, 2, 2, 0, 0, 0);
+	lcd_blit_string(reg_val, 24, 58+lineno*13, 15, 15, 15, 5, 0 ,0);
+}
+
+static inline void blit_registers(struct EnhancedContextStateFrame_s *frame,
+		int hi)
+{
+	if (!hi) {
+		for (int i=0; i<4; i++) {
+			blit_register(i, i, frame->csf.r[i]);
+		}
+	} else {
+		/* Display registers r4-r7 instead */
+		for (int i=0; i<4; i++) {
+			blit_register(i, i+4, frame->rh[i]);
+		}
 	}
 
 	uint32_t xpsr = frame->csf.xpsr;
@@ -204,7 +217,7 @@ void DebugMon_Handler_c(struct EnhancedContextStateFrame_s *frame)
 	edit_pos = 0;
 
 	blit_screen();
-	blit_registers(frame);
+	blit_registers(frame, 0);
 	lcd_refresh();
 
 	do {
