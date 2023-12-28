@@ -20,9 +20,12 @@ static DIOTag_t matrix_inps[] = {
 	GPIOC_DIO(9),
 };
 
+static DIOTag_t matrix_led = GPIOA_DIO(15);
+
 static uint8_t outp_statuses[NELEMENTS(matrix_outps)];
 
 static matrix_cb_t matrix_callback;
+static uint32_t matrix_scan_count;
 
 /* This is the keymap rotated 90 degrees CCW */
 static const enum matrix_keys keymap[NELEMENTS(matrix_inps) * NELEMENTS(matrix_outps)] = {
@@ -73,6 +76,8 @@ void matrix_scanstep()
 
 	if ((cur_outp) >= NELEMENTS(matrix_outps)) {
 		cur_outp = 0;
+		matrix_scan_count++;
+		DIOWrite(matrix_led, (matrix_scan_count & 0x400));
 	}
 
 	// set new current col as output high
@@ -98,6 +103,8 @@ void matrix_scanall()
 
 void matrix_init()
 {
+	DIOSetOutput(matrix_led, false, DIO_DRIVE_LIGHT, true);
+
 	/* Cols are OUTPUT HIGH or input pulldown; initially input */
 	for (int i=0; i<NELEMENTS(matrix_outps); i++) {
 		DIOSetInput(matrix_outps[i], DIO_PULL_DOWN);
