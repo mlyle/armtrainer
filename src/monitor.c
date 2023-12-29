@@ -234,7 +234,7 @@ void DebugMon_Handler_c(struct EnhancedContextStateFrame_s *frame)
 
 	do {
 		matrix_scanall();
-	} while (prog_state == STATE_STOPPED);
+	} while ((prog_state == STATE_STOPPED) || (!lcd_is_ready()));
 
 	if (prog_state == STATE_STEP) {
 		prog_state = STATE_STOPPED;

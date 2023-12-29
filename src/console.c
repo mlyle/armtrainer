@@ -1,9 +1,9 @@
 #include <console.h>
+#include <stdbool.h>
 #include <lcdutil.h>
 #include <matrix.h>
 #include <stringutil.h>
 #include <systick_handler.h>
-#include <stdbool.h>
 
 #define NUMCOL 17
 

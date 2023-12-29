@@ -243,6 +243,15 @@ static inline void lcd_dma_wait_finish()
 	DIOHigh(lcd_cs);
 }
 
+bool lcd_is_ready()
+{
+	if (DMA_GetCmdStatus(lcd_dma_stream) == DISABLE) {
+		return true;
+	}
+
+	return false;
+}
+
 void lcd_refresh()
 {
 	lcd_dma_wait_finish();

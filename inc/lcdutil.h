@@ -12,6 +12,7 @@ void lcd_move_up(int y, int y2, uint8_t fr, uint8_t fg, uint8_t fb);
 void lcd_signalerror();
 void lcd_blit(int x, int y, uint8_t r, uint8_t g, uint8_t b);
 void lcd_getcolor(int x, int y, uint8_t *r, uint8_t *g, uint8_t *b);
+bool lcd_is_ready();
 
 void lcd_init();
 
