@@ -14,10 +14,10 @@ static DIOTag_t matrix_outps[] = {
 };
 
 static DIOTag_t matrix_inps[] = {
-	GPIOC_DIO(6),
-	GPIOC_DIO(7),
-	GPIOC_DIO(8),
 	GPIOC_DIO(9),
+	GPIOC_DIO(8),
+	GPIOC_DIO(7),
+	GPIOC_DIO(6),
 };
 
 static DIOTag_t matrix_led = GPIOA_DIO(15);
