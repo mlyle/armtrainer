@@ -63,26 +63,20 @@ static void snake_draw(uint8_t x, uint8_t y, uint16_t color)
 	uint8_t startX = x*SNAKE_SCALEFACTOR;
 	uint8_t endX = (x+1)*SNAKE_SCALEFACTOR - 1;
 
-	/* These conditionals protect the border of the field */
-	if (startX == 0) {
-		startX = 1;
-	}
-
+	/* These conditionals protect the lower/right border of the field;
+	 * The upper/left borders are protected because we start at
+	 * 1 (leaving a vestige of a grid behind) */
 	if (endX > 158) {
 		endX = 158;
 	}
 
-	for (int i = 0; i < SNAKE_SCALEFACTOR; i++)
+	for (int i = 1; i < SNAKE_SCALEFACTOR; i++)
 	{
-		if ((y*SNAKE_SCALEFACTOR+i) == 0) {
-			continue;
-		}
-
 		if ((y*SNAKE_SCALEFACTOR+i) == 49) {
 			continue;
 		}
 
-		lcd_blit_horiz(startX, y*SNAKE_SCALEFACTOR+i, endX, r, g, b);
+		lcd_blit_horiz(startX+1, y*SNAKE_SCALEFACTOR+i, endX, r, g, b);
 	}
 }
 
