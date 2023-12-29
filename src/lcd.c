@@ -34,7 +34,8 @@ static inline void lcd_spi_waitcompletion()
 
 static inline void lcd_send_command(uint8_t cmd)
 {
-	delay_loop(100);
+	DIOHigh(lcd_cs);
+	delay_loop(200);
 	DIOLow(lcd_a0);	// Low for command
 	delay_loop(100);
 	DIOLow(lcd_cs);
@@ -95,7 +96,7 @@ static inline void lcd_setup_dma(uint8_t *data, int len)
 	DMA_DeInit(lcd_dma_stream);
 	DMA_Cmd(lcd_dma_stream, DISABLE);
 
-	DMA_InitTypeDef dma_init = {};
+	DMA_InitTypeDef dma_init = {0};
 
 	dma_init.DMA_Channel = lcd_dma_channel;
 	dma_init.DMA_PeripheralBaseAddr = (uintptr_t) &lcd_spi->DR;
@@ -107,10 +108,9 @@ static inline void lcd_setup_dma(uint8_t *data, int len)
 	dma_init.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
 	dma_init.DMA_MemoryBurst = DMA_MemoryBurst_Single;
 	dma_init.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+	dma_init.DMA_BufferSize = len;
 
 	DMA_Init(lcd_dma_stream, &dma_init);
-	DMA_FlowControllerConfig(lcd_dma_stream, DMA_FlowCtrl_Peripheral);
-
 	DMA_Cmd(lcd_dma_stream, ENABLE);
 }
 
@@ -123,16 +123,6 @@ static inline void lcd_send_data_bulk(uint8_t *data, int len)
 	delay_loop(100);
 
 	lcd_setup_dma(data, len);
-
-#if 0
-	for (int i = 0; i< len; i++) {
-		lcd_spi->DR = data[i]; // send SPI
-
-		lcd_spi_waitcompletion();
-	}
-	delay_loop(100);
-	DIOHigh(lcd_cs);
-#endif
 }
 
 static inline void lcd_blit_internal(int x, int y, uint8_t r, uint8_t g, uint8_t b)
@@ -245,7 +235,7 @@ static inline void lcd_dma_wait_finish()
 		return;
 	}
 
-	while (DMA_GetFlagStatus(lcd_dma_stream, lcd_dma_tcif) == RESET);
+	//while (DMA_GetFlagStatus(lcd_dma_stream, lcd_dma_tcif) == RESET);
 
 	lcd_spi_waitcompletion();
 
@@ -257,7 +247,9 @@ void lcd_refresh()
 {
 	lcd_dma_wait_finish();
 
-	if (!((++lcd_framecount) & 15)) {
+	lcd_framecount++;
+
+	if (!(lcd_framecount & 15)) {
 		lcd_send_command(0x2c);		// Ram WRITE command
 	}
 
@@ -345,6 +337,7 @@ void lcd_init()
 	lcd_spi->CR2 = 0;
 	lcd_spi->CR1 = SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL | SPI_CR1_CPHA |
 		(1 << 3 /*SPI_CR1_BR_Pos*/) | SPI_CR1_SPE;
+	lcd_spi->CR2 = SPI_CR2_TXDMAEN;
 
 	// After 50ms, exit reset
 	delay_ms(50);
