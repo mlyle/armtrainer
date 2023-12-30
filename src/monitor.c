@@ -354,18 +354,27 @@ static void perform_store()
 static void edit_key(enum matrix_keys key, bool pressed)
 {
 	static bool load_held;
+	static bool did_combination;
 
 	static enum matrix_keys last_key;
 
 	if (!pressed) {
 		if (key == key_load) {
+			if (!did_combination) {
+				perform_load(last_key == key_load);
+
+				last_key = key;
+			}
+
 			load_held = false;
+			did_combination = false;
 		}
 
 		return;
 	}
 
 	if (load_held) {
+		did_combination = true;
 		switch (key) {
 			case key_0:
 				register_screen = 0;
@@ -385,61 +394,60 @@ static void edit_key(enum matrix_keys key, bool pressed)
 			default:
 				break;
 		}
+	} else {
+		switch (key) {
+			case key_clr:
+				if (edit_pos != 0) {
+					edit_pos--;
+				} else {
+					lcd_signalerror();
+				}
+
+				if ((!editing_addr) && (edit_pos < 4)) {
+					edit_pos = 4;
+					lcd_signalerror();
+				}
+				break;
+			case key_addr:
+				if (editing_addr) {
+					perform_load(false);
+				} else {
+					editing_addr = true;
+					edit_pos = 0;
+				}
+				break;
+			case key_0:
+			case key_1:
+			case key_2:
+			case key_3:
+			case key_4:
+			case key_5:
+			case key_6:
+			case key_7:
+			case key_8:
+			case key_9:
+				edit_key_digit(key-key_0);
+				break;
+			case key_a:
+			case key_b:
+			case key_c:
+			case key_d:
+			case key_e:
+			case key_f:
+				edit_key_digit(key-key_a + 10);
+				break;
+			case key_load:
+				load_held = true;
+				// actual loads are performed on
+				// release
+				return;
+			case key_store:
+				perform_store();
+				break;
+			default:
+				break;
+		}
 	}
-
-	switch (key) {
-		case key_clr:
-			if (edit_pos != 0) {
-				edit_pos--;
-			} else {
-				lcd_signalerror();
-			}
-
-			if ((!editing_addr) && (edit_pos < 4)) {
-				edit_pos = 4;
-				lcd_signalerror();
-			}
-			break;
-		case key_addr:
-			if (editing_addr) {
-				perform_load(false);
-			} else {
-				editing_addr = true;
-				edit_pos = 0;
-			}
-			break;
-		case key_0:
-		case key_1:
-		case key_2:
-		case key_3:
-		case key_4:
-		case key_5:
-		case key_6:
-		case key_7:
-		case key_8:
-		case key_9:
-			edit_key_digit(key-key_0);
-			break;
-		case key_a:
-		case key_b:
-		case key_c:
-		case key_d:
-		case key_e:
-		case key_f:
-			edit_key_digit(key-key_a + 10);
-			break;
-		case key_load:
-			load_held = true;
-			perform_load(last_key == key_load);
-			break;
-		case key_store:
-			perform_store();
-			break;
-		default:
-			break;
-	}
-
-	blit_screen();
 
 	last_key = key;
 }
@@ -524,7 +532,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 
 		case 0x20:		/* clear top half of screen, position cursor at 0 */
 			console_clearscreen();
-			break;		
+			break;
 		case 0x21:		/* output number in R0 to screen, as denary, newline */
 			console_number_10(frame->r[0]);
 			break;
