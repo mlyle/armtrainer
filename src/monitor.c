@@ -54,6 +54,8 @@ static uint8_t edit_pos = 0;
 static uint32_t edit_addr = 0;
 static uint32_t edit_val = 0;
 
+static int register_screen = 0;
+
 static bool run_fast = false;
 
 int snake();
@@ -179,6 +181,8 @@ static inline void blit_registers(struct EnhancedContextStateFrame_s *frame,
 		blit_register_name(2, "rt", frame->csf.return_address);
 		blit_register_name(3, "xp", xpsr);
 	}
+
+	/* XXX show surrounding instructions in another mode? */
 
 	blit_flag_chars(run_fast, 114, 62, ' ', 'F');
 	blit_flag(xpsr & 0x80000000, 123, 62, 'n');
@@ -331,9 +335,41 @@ static void perform_store()
 	perform_load(false);
 }
 
-static void edit_key(enum matrix_keys key)
+static void edit_key(enum matrix_keys key, bool pressed)
 {
+	static bool load_held;
+
 	static enum matrix_keys last_key;
+
+	if (!pressed) {
+		if (key == key_load) {
+			load_held = false;
+		}
+
+		return;
+	}
+
+	if (load_held) {
+		switch (key) {
+			case key_0:
+				register_screen = 0;
+				break;
+			case key_1:
+				register_screen = 1;
+				break;
+			case key_2:
+				register_screen = 2;
+				break;
+			case key_3:
+				register_screen = 3;
+				break;
+			case key_f:
+				run_fast = !run_fast;
+				break;
+			default:
+				break;
+		}
+	}
 
 	switch (key) {
 		case key_clr:
@@ -377,6 +413,7 @@ static void edit_key(enum matrix_keys key)
 			edit_key_digit(key-key_a + 10);
 			break;
 		case key_load:
+			load_held = true;
 			perform_load(last_key == key_load);
 			break;
 		case key_store:
@@ -395,25 +432,27 @@ static void monitor_key_changed(enum matrix_keys key, bool pressed)
 {
 	random_blendseed(systick_cnt);
 
-	if (pressed) {
-		switch (key) {
-			case key_run:
+	switch (key) {
+		case key_run:
+			if (pressed) {
 				if (prog_state != STATE_RUN) {
 					prog_state = STATE_RUN;
 				} else {
 					prog_state = STATE_STOPPED;
 				}
-				break;
-			case key_step:
+			}
+			break;
+		case key_step:
+			if (pressed) {
 				prog_state = STATE_STEP;
-				break;
-			default:
-				if (prog_state == STATE_STOPPED) {
-					edit_key(key);
-				}
-				break;
-		};
-	}
+			}
+			break;
+		default:
+			if (prog_state == STATE_STOPPED) {
+				edit_key(key, pressed);
+			}
+			break;
+	};
 }
 
 
