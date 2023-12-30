@@ -52,7 +52,9 @@ enum progrun_state {
 static bool editing_addr = true;
 static uint8_t edit_pos = 0;
 static uint32_t edit_addr = 0;
+static uint32_t loaded_addr = 0;
 static uint32_t edit_val = 0;
+static struct EnhancedContextStateFrame_s *global_frame;
 
 static int register_screen = 0;
 
@@ -125,12 +127,6 @@ static inline void blit_addrval()
 	}
 }
 
-static inline void blit_screen()
-{
-	blit_addrval();
-	lcd_refresh();
-}
-
 static inline void blit_flag_chars(int flag, int x, int y, char f, char g)
 {
 	if (flag) {
@@ -184,11 +180,12 @@ static inline void blit_registers(struct EnhancedContextStateFrame_s *frame,
 
 	/* XXX show surrounding instructions in another mode? */
 
-	blit_flag_chars(run_fast, 114, 62, ' ', 'F');
-	blit_flag(xpsr & 0x80000000, 123, 62, 'n');
-	blit_flag(xpsr & 0x40000000, 132, 62, 'z');
-	blit_flag(xpsr & 0x20000000, 141, 62, 'c');
-	blit_flag(xpsr & 0x10000000, 150, 62, 'v');
+
+static inline void blit_screen()
+{
+	blit_addrval();
+	blit_registers(global_frame, register_screen);
+	lcd_refresh();
 }
 
 static bool address_valid_for_write()
@@ -210,7 +207,6 @@ static bool address_valid_for_read()
 		return true;
 	}
 
-
 	if ((edit_addr & 0xffff0000) == 0x20000000) {
 		return true;
 	}
@@ -222,37 +218,58 @@ static bool address_valid_for_read()
 	return false;
 }
 
+static bool perform_load_impl()
+{
+	edit_addr &= 0xfffffffe;	/* Align */
+
+	if (!address_valid_for_read()) {
+		edit_val = 0x0bad;
+		return false;
+	}
+
+	loaded_addr = edit_addr;
+
+	edit_val = *((uint16_t *) edit_addr);
+	edit_pos = 4;
+
+	editing_addr = false;
+
+	return true;
+}
 
 void DebugMon_Handler_c(struct EnhancedContextStateFrame_s *frame)
 {
 	if ((frame->csf.return_address & 0xff000000) == 0x08000000) {
+		/* Short circuit when not running from ram */
 		return;
 	}
 
+	global_frame = frame;
+
 	edit_addr = frame->csf.return_address;
 
-	if (address_valid_for_read(edit_addr)) {
-		edit_val = *((uint16_t *) edit_addr);
-	} else {
-		edit_val = 0x0BAD;
-	}
+	perform_load_impl();
 
 	editing_addr = true;
 	edit_pos = 0;
 
-	if (
-			(!run_fast) ||
-			(prog_state == STATE_STOPPED) ||
-			lcd_is_ready()) {
-		blit_addrval();
-		blit_registers(frame, 0);
+	if (run_fast) {
+		do {
+			matrix_scanall();
 
-		lcd_refresh();
+			if (lcd_is_ready()) {
+				blit_screen();
+			}
+		} while (prog_state == STATE_STOPPED);
+	} else {
+		do {
+			while (!lcd_is_ready()) {
+				matrix_scanall();
+			}
+
+			blit_screen();
+		} while (prog_state == STATE_STOPPED);
 	}
-
-	do {
-		matrix_scanall();
-	} while ((prog_state == STATE_STOPPED) || (!run_fast && !lcd_is_ready()));
 
 	if (prog_state == STATE_STEP) {
 		prog_state = STATE_STOPPED;
@@ -298,23 +315,14 @@ static void edit_key_digit(int digit)
 
 static void perform_load(bool repeated)
 {
-	edit_addr &= 0xfffffffe;	/* Align */
-
 	if ((!editing_addr) && (repeated)) {
 		// if load pressed consecutively, increment address
 		edit_addr += 2;
 	}
 
-	if (!address_valid_for_read()) {
+	if (!perform_load_impl()) {
 		lcd_signalerror();
-
-		return;
 	}
-
-	edit_val = *((uint16_t *) edit_addr);
-	edit_pos = 4;
-
-	editing_addr = false;
 }
 
 static void perform_store()
@@ -559,7 +567,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 
 		case 0x41:		/* Undocumented for students: disable run fast & halt */
 			run_fast = false;
-			prog_state = STATE_STOPPED; 
+			prog_state = STATE_STOPPED;
 			break;
 
 
