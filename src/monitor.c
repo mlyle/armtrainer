@@ -572,10 +572,21 @@ int main()
 		// Program the PLL, using HSE.
 		RCC_PLLConfig(RCC_PLLSource_HSE,
 				15,	/* PLLM = /15 = 1.667MHz */
-				144,	/* PLLN = *96 = 240MHz */
+				144,	/* PLLN = *144 = 240MHz */
 				4,	/* PLLP = /4 = 60MHz, underclock */
 				5	/* PLLQ = /5 = 48MHz */
 			);
+		/* 60MHz is the real only viable clock here.
+		 * SPI can only be divided by power of 2, and we
+		 * want as close to 15MHz as possible for display
+		 * performance.
+		 *
+		 * Even if we could hit 100MHz, that's just 12.5MHz,
+		 * and we can't-- can only hit 96MHz and keep USB
+		 * clock working. (12MHz).
+		 *
+		 * Not worth it: display performance dominates here.
+		 */
 	}
 
 	// Get the PLL starting.
