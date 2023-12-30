@@ -57,7 +57,7 @@ static uint32_t edit_val = 0;
 static struct EnhancedContextStateFrame_s *global_frame;
 
 static int register_screen = 0;
-
+static bool show_decimal = false;
 static bool run_fast = false;
 
 int snake();
@@ -136,7 +136,7 @@ static inline void blit_cursor(int x, int y)
 
 static inline void blit_insn(int y, uint32_t addr, bool highlighted)
 {
-	char *tmp;
+	const char *tmp;
 
 	lcd_blit_box(0, y, 159, y+13, 0, 0, 0);
 
@@ -184,10 +184,10 @@ static inline void blit_insns()
 
 static inline void blit_addrval()
 {
-	char *addrhex = to_hex32(edit_addr);
-
+	const char *addrhex = to_hex32(edit_addr);
 	lcd_blit_string(addrhex, 0, 112, 0, 0, 0, 15, 15, 15);
-	char *inshex = to_hex16(edit_val);
+
+	const char *inshex = to_hex16(edit_val);
 	lcd_blit_string(inshex, 75, 112, 0, 0, 0, 8, 8, 15);
 
 	const char *mnem = get_mnem(edit_val);
@@ -222,12 +222,18 @@ static inline void blit_flag(int flag, int x, int y, char f)
 static inline void blit_register_name(int lineno, const char *regn,
 		uint32_t val)
 {
-	char *reg_val = to_hex32(val);
+	const char *reg_val;
+
+	if (show_decimal) {
+		reg_val = to_decimal32(val);
+	} else {
+		reg_val = to_hex32(val);
+	}
 
 	lcd_blit_string(regn, 0, 58+lineno*13, 15, 2, 2, 0, 0, 0);
 
-	// fill the space inbetween
-	lcd_blit_box(18, 58+lineno*13, 23, 60+lineno*13, 0, 0, 0);
+	// fill the space to end of line
+	lcd_blit_box(18, 58+lineno*13, 159, 60+lineno*13, 0, 0, 0);
 
 	lcd_blit_string(reg_val, 24, 58+lineno*13, 15, 15, 15, 5, 0, 0);
 
@@ -266,7 +272,7 @@ static inline void blit_registers(struct EnhancedContextStateFrame_s *frame,
 		blit_insns();
 	}
 
-	if (what_to_show < 3) {
+	if ((what_to_show < 3) && (show_decimal)) {
 		blit_flag_chars(run_fast, 114, 62, ' ', 'F');
 		blit_flag(xpsr & 0x80000000, 123, 62, 'n');
 		blit_flag(xpsr & 0x40000000, 132, 62, 'z');
@@ -443,6 +449,9 @@ static void edit_key(enum matrix_keys key, bool pressed)
 				break;
 			case key_3:
 				register_screen = 3;
+				break;
+			case key_d:
+				show_decimal = !show_decimal;
 				break;
 			case key_f:
 				run_fast = !run_fast;

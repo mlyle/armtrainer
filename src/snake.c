@@ -173,7 +173,7 @@ int snake(void)
 			// bits of crossing snake.
 			donterase += 2;
 
-			char *score = to_hex32(length);
+			const char *score = to_hex32(length);
 			lcd_blit_string(score, 24, 84, 15, 15, 0, 0, 0, 9);
 
 			// Generate food positions until we find an empty one.

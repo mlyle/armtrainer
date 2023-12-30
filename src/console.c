@@ -106,7 +106,7 @@ void console_number_16(uint32_t n)
 	console_cr();
 	console_nl();
 
-	char *str = to_hex32(n);
+	const char *str = to_hex32(n);
 	while (*str) {
 		console_char_norefresh(*str);
 		str++;
