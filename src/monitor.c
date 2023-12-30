@@ -134,7 +134,7 @@ static inline void blit_cursor(int x, int y)
 	lcd_blit_horiz(x, y+2, x+8, 15, 0, 0);
 }
 
-static inline void blit_insn(int y, uint32_t addr)
+static inline void blit_insn(int y, uint32_t addr, bool highlighted)
 {
 	char *tmp;
 
@@ -147,24 +147,26 @@ static inline void blit_insn(int y, uint32_t addr)
 
 	tmp = to_hex8(addr);
 
-	lcd_blit_smdigit_string(tmp, 0, y, 200, 200, 200,
+	uint8_t l = highlighted ? 240 : 160;
+
+	lcd_blit_smdigit_string(tmp, 0, y, l, l, l/4,
 			0, 0, 0);
 
 	if (!address_valid_for_read(addr)) {
-		lcd_blit_smdigit_string("????", 15, y, 150, 150, 150,
+		lcd_blit_smdigit_string("????", 15, y, l, l/2, l/2,
 				0, 0, 0);
 	} else {
 		uint16_t insn = *((uint16_t *) addr);
 		tmp = to_hex16(addr);
 
-		lcd_blit_smdigit_string(tmp, 15, y, 150, 150, 150,
+		lcd_blit_smdigit_string(tmp, 15, y, l/4, l/2, l,
 				0, 0, 0);
 
 		char decoded_insn[14];
 
 		decode_insn(decoded_insn, addr, insn);
 
-		lcd_blit_string(decoded_insn, 40, y, 255, 255, 255,
+		lcd_blit_string(decoded_insn, 40, y, l, l, l,
 				0, 0, 0);
 	}
 }
@@ -174,7 +176,7 @@ static inline void blit_insns()
 	uint32_t addr = loaded_addr - 2;
 
 	for (int i=0; i<3; i++) {
-		blit_insn(58+i*13, addr);
+		blit_insn(58+i*13, addr, addr == loaded_addr);
 
 		addr += 2;
 	}
