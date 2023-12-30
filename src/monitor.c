@@ -89,6 +89,36 @@ void DebugMon_Handler(void)
 			"pop {r4, r5, r6, r7, pc} \n");
 }
 
+static bool address_valid_for_write(uint32_t addr)
+{
+	if (addr & 1) {
+		return false;
+	}
+
+	if ((addr & 0xffff8000) == 0x20000000) {
+		return true;
+	}
+
+	return false;
+}
+
+static bool address_valid_for_read(uint32_t addr)
+{
+	if (address_valid_for_write(addr)) {
+		return true;
+	}
+
+	if ((addr & 0xffff0000) == 0x20000000) {
+		return true;
+	}
+
+	if ((addr & 0xffc0000) == 0x08000000) {
+		return true;
+	}
+
+	return false;
+}
+
 static inline void clear_cursor(int y)
 {
 	lcd_blit_horiz(0, y, 159, 0, 0, 0);
@@ -196,41 +226,11 @@ static inline void blit_screen()
 	lcd_refresh();
 }
 
-static bool address_valid_for_write()
-{
-	if (edit_addr & 1) {
-		return false;
-	}
-
-	if ((edit_addr & 0xffff8000) == 0x20000000) {
-		return true;
-	}
-
-	return false;
-}
-
-static bool address_valid_for_read()
-{
-	if (address_valid_for_write()) {
-		return true;
-	}
-
-	if ((edit_addr & 0xffff0000) == 0x20000000) {
-		return true;
-	}
-
-	if ((edit_addr & 0xffc0000) == 0x08000000) {
-		return true;
-	}
-
-	return false;
-}
-
 static bool perform_load_impl()
 {
 	edit_addr &= 0xfffffffe;	/* Align */
 
-	if (!address_valid_for_read()) {
+	if (!address_valid_for_read(edit_addr)) {
 		edit_val = 0x0bad;
 		return false;
 	}
@@ -335,7 +335,7 @@ static void perform_load(bool repeated)
 
 static void perform_store()
 {
-	if (!address_valid_for_write()) {
+	if (!address_valid_for_write(edit_addr)) {
 		lcd_signalerror();
 		return;
 	}
