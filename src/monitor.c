@@ -110,7 +110,7 @@ static inline void blit_addrval()
 	char *inshex = to_hex16(edit_val);
 	lcd_blit_string(inshex, 75, 112, 0, 0, 0, 8, 8, 15);
 
-	char *mnem = get_mnem(edit_val);
+	const char *mnem = get_mnem(edit_val);
 
 	lcd_blit_string(mnem, 123, 112, 15, 15, 15, 0, 0, 0);
 
