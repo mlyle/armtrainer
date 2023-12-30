@@ -3,11 +3,10 @@
 #include <armdio.h>
 #include <delayutil.h>
 #include <font8x13.h>
+#include <font4x11.h>
 #include <stm32f4xx.h>
 
 /* For ST7735S 160x128 display */
-
-
 static DIOTag_t lcd_rst = GPIOB_DIO(7);
 static DIOTag_t lcd_cs = GPIOB_DIO(10);
 static DIOTag_t lcd_a0 = GPIOB_DIO(6);
@@ -196,8 +195,59 @@ void lcd_move_up(int y, int y2, uint8_t fr, uint8_t fg, uint8_t fb)
 	lcd_blit_rows(y2-y, y2, fr, fg, fb);
 }
 
-static void lcd_blit_char_internal(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
-		uint8_t bgr, uint8_t bgg, uint8_t bgb)
+static void lcd_blit_smdigit_internal(uint8_t c, int x, int y,
+	uint8_t r, uint8_t g, uint8_t b,
+	uint8_t bgr, uint8_t bgg, uint8_t bgb)
+{
+	if (c == '?') {
+		c = 16;
+	} else {
+		if (c > 'a') {
+			c = c - 'a' + 10;
+		} else if (c > 'A') {
+			c = c - 'A' + 10;
+		} else if (c == '?') {
+			c = 17;
+		} else if (c > '0') {
+			c = c - '0';
+		}
+
+		if (c > 15) {
+			c = 17;	/* dot in middle/invalid */
+		}
+	}
+
+	uint8_t (*raster)[6] = &font_4x12_rasters[c];
+
+	for (int i=0; i<6; i++) {
+		uint8_t tmp = (*raster)[i];
+		for (int j = 0 ; j < 4; j++) {
+			if (tmp & 0x80) {
+				lcd_blit_internal(x+j, y, r, g, b);
+			} else {
+				lcd_blit_internal(x+j, y, bgr, bgg, bgb);
+			}
+		}
+
+		lcd_blit_internal(x+4, y, bgr, bgg, bgb);
+		y++;
+
+		for (int j = 0 ; j < 4; j++) {
+			if (tmp & 0x80) {
+				lcd_blit_internal(x+j, y, r, g, b);
+			} else {
+				lcd_blit_internal(x+j, y, bgr, bgg, bgb);
+			}
+		}
+
+		lcd_blit_internal(x+4, y, bgr, bgg, bgb);
+		y++;
+	}
+}
+
+static void lcd_blit_char_internal(uint8_t c, int x, int y,
+	uint8_t r, uint8_t g, uint8_t b,
+	uint8_t bgr, uint8_t bgg, uint8_t bgb)
 {
 	if ((c < 0x20) || (c > 0x7e)) {
 		c = ' ';
@@ -226,12 +276,21 @@ void lcd_blit_char(uint8_t c, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 	lcd_blit_char_internal(c, x, y, r, g, b, bgr, bgg, bgb);
 }
 
+int lcd_blit_smdigit_string(const char *str, int x, int y,
+		uint8_t r, uint8_t g, uint8_t b,
+		uint8_t bgr, uint8_t bgg, uint8_t bgb) {
+	while ((*str) && (x <= 155)) {
+		lcd_blit_smdigit_internal(*str, x, y, r, g, b, bgr, bgg, bgb);
+		str++; x+=5;
+	}
+
+	return x;
+}
+
 int lcd_blit_string(const char *str, int x, int y, uint8_t r, uint8_t g, uint8_t b,
 		uint8_t bgr, uint8_t bgg, uint8_t bgb) {
-	while ((*str) && (x <= 150)) {
+	while ((*str) && (x <= 151)) {
 		lcd_blit_char_internal(*str, x, y, r, g, b, bgr, bgg, bgb);
-		lcd_blit_box(x+8, y, x+8, y+12, bgr, bgg, bgb);
-
 		str++; x+=9;
 	}
 
