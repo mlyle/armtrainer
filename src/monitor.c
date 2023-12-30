@@ -147,7 +147,15 @@ static inline void blit_register_name(int lineno, const char *regn,
 	char *reg_val = to_hex32(val);
 
 	lcd_blit_string(regn, 0, 58+lineno*13, 15, 2, 2, 0, 0, 0);
-	lcd_blit_string(reg_val, 24, 58+lineno*13, 15, 15, 15, 5, 0 ,0);
+
+	// fill the space inbetween
+	lcd_blit_box(18, 58+lineno*13, 23, 60+lineno*13, 0, 0, 0);
+
+	lcd_blit_string(reg_val, 24, 58+lineno*13, 15, 15, 15, 5, 0, 0);
+
+	// and blank end of line
+	lcd_blit_box(130, 58+lineno*13, 159, 60+lineno*13, 0, 0, 0);
+
 }
 
 static inline void blit_register(int lineno, int regnum, uint32_t val)
