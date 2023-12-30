@@ -55,7 +55,7 @@ else
     CFLAGS += -Werror
 endif
 
-CFLAGS += -DHSE_VALUE=8000000
+CFLAGS += -DHSE_VALUE=25000000
 
 LDFLAGS := -nostartfiles -Wl,-static -lc -lgcc -Wl,--warn-common
 LDFLAGS += -Wl,--fatal-warnings -Wl,--gc-sections
