@@ -637,8 +637,13 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 
 		case 0x41:		/* Undocumented for students: disable run fast & halt */
 			run_fast = false;
+			singlestep_enable();
 			prog_state = STATE_STOPPED;
 			break;
+
+		case 0x42:		/* Undocumented for students: disable debug monitor entirely */
+			singlestep_disable();
+
 
 
 		case 0x45:		/* 'E', hidden secret snake syscall... */
