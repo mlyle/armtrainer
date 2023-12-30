@@ -206,6 +206,9 @@ static bool handle_digit(int digit)
 
 static void read_number_key_changed(enum matrix_keys key, bool pressed)
 {
+	/* XXX: key_run / key_step should really escape the
+	 * program.
+	 */
 	if (pressed) {
 		/* Keys only valid after first position */
 		if (read_number_state.pos) {
@@ -225,6 +228,7 @@ static void read_number_key_changed(enum matrix_keys key, bool pressed)
 					console_bs();
 					return;
 
+				case key_load:
 				case key_store:
 				case key_run:
 					console_char(' '); /* Erase cursor if necessary */
@@ -265,10 +269,6 @@ uint32_t console_read_number(uint8_t base)
 	int iter = 0;
 
 	do {
-		/* XXX: need a way to escape from this if a student is
-		 * "running" a program with this in a tight loop
-		 */
-
 		/* Print cursor and move position left */
 		if (iter % 2) { 
 			console_char('_');
@@ -281,7 +281,7 @@ uint32_t console_read_number(uint8_t base)
 		console_bs();
 
 		uint32_t orig = systick_cnt;
-		while ((systick_cnt - orig) < 10) {
+		while ((systick_cnt - orig) < 15) {
 			matrix_scanall();
 		}
 
