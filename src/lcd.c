@@ -217,7 +217,7 @@ static void lcd_blit_smdigit_internal(uint8_t c, int x, int y,
 		}
 	}
 
-	uint8_t (*raster)[6] = &font_4x12_rasters[c];
+	const uint8_t (*raster)[6] = &font_4x12_rasters[c];
 
 	for (int i=0; i<6; i++) {
 		uint8_t tmp = (*raster)[i];
@@ -253,7 +253,7 @@ static void lcd_blit_char_internal(uint8_t c, int x, int y,
 		c = ' ';
 	}
 
-	uint8_t (*raster)[13] = &font_8x13_rasters[c - 0x20];
+	const uint8_t (*raster)[13] = &font_8x13_rasters[c - 0x20];
 
 	for (int i = 12 ; i >= 0; i--){
 		uint8_t tmp = (*raster)[i];

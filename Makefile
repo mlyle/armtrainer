@@ -67,7 +67,8 @@ build/ef_monitor.bin: build/monitor.bin
 	cat build/monitor.bin > $@
 
 flash: build/ef_monitor.bin
-	openocd -f /opt/homebrew/share/openocd/scripts/interface/stlink.cfg -f /opt/homebrew/share/openocd/scripts/target/stm32f4x.cfg -c "program build/ef_monitor.bin verify reset exit 0x08000000"
+	dfu-util -a 0 -i 0 -s 0x08000000:leave -D  build/monitor.bin
+#	openocd -f /opt/homebrew/share/openocd/scripts/interface/stlink.cfg -f /opt/homebrew/share/openocd/scripts/target/stm32f4x.cfg -c "program build/ef_monitor.bin verify reset exit 0x08000000"
 
 %.bin: %
 	$(ARM_SDK_PREFIX)objcopy -O binary $< $@

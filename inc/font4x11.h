@@ -6,7 +6,7 @@
  * 8 #... 9 #..# A #.#. B #.##
  * C ##.. D ##.# E ###. F ####
  */
-uint8_t font_4x12_rasters[][6] = {
+const uint8_t font_4x12_rasters[][6] = {
 	/* 0 */
 	{ 0x69, 0x99, 0x99, 0x99, 0x99, 0x60 },
 	{ 0x6a, 0x22, 0x22, 0x22, 0x22, 0xf0 },
