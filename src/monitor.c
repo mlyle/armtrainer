@@ -54,6 +54,8 @@ static uint8_t edit_pos = 0;
 static uint32_t edit_addr = 0;
 static uint32_t edit_val = 0;
 
+static bool run_fast = false;
+
 int snake();
 
 __attribute__((naked))
@@ -127,13 +129,18 @@ static inline void blit_screen()
 	lcd_refresh();
 }
 
-static inline void blit_flag(int flag, int x, int y, char f)
+static inline void blit_flag_chars(int flag, int x, int y, char f, char g)
 {
 	if (flag) {
-		lcd_blit_char(toupper(f), x, y, 15, 9, 9, 4, 0, 0);
+		lcd_blit_char(g, x, y, 15, 9, 9, 4, 0, 0);
 	} else {
-		lcd_blit_char(tolower(f), x, y, 8, 8, 8, 0, 0, 0);
+		lcd_blit_char(f, x, y, 8, 8, 8, 0, 0, 0);
 	}
+}
+
+static inline void blit_flag(int flag, int x, int y, char f)
+{
+	blit_flag_chars(flag, x, y, f, toupper(f));
 }
 
 static inline void blit_register_name(int lineno, const char *regn,
@@ -173,6 +180,7 @@ static inline void blit_registers(struct EnhancedContextStateFrame_s *frame,
 		blit_register_name(3, "xp", xpsr);
 	}
 
+	blit_flag_chars(run_fast, 114, 62, ' ', 'F');
 	blit_flag(xpsr & 0x80000000, 123, 62, 'n');
 	blit_flag(xpsr & 0x40000000, 132, 62, 'z');
 	blit_flag(xpsr & 0x20000000, 141, 62, 'c');
@@ -228,13 +236,19 @@ void DebugMon_Handler_c(struct EnhancedContextStateFrame_s *frame)
 	editing_addr = true;
 	edit_pos = 0;
 
-	blit_screen();
-	blit_registers(frame, 0);
-	lcd_refresh();
+	if (
+			(!run_fast) ||
+			(prog_state == STATE_STOPPED) ||
+			lcd_is_ready()) {
+		blit_addrval();
+		blit_registers(frame, 0);
+
+		lcd_refresh();
+	}
 
 	do {
 		matrix_scanall();
-	} while ((prog_state == STATE_STOPPED) || (!lcd_is_ready()));
+	} while ((prog_state == STATE_STOPPED) || (!run_fast && !lcd_is_ready()));
 
 	if (prog_state == STATE_STEP) {
 		prog_state = STATE_STOPPED;
@@ -499,12 +513,13 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			console_set_bgcolor(frame->r[0]);
 			break;
 
-		case 0x40:		/* Undocumented for students: disable single step / run fast */
+		case 0x40:		/* Undocumented for students: enable run fast */
+			run_fast = true;
 			singlestep_disable();
 			break;
 
-		case 0x41:		/* Undocumented for students: enable single step & halt */
-			singlestep_enable();
+		case 0x41:		/* Undocumented for students: disable run fast & halt */
+			run_fast = false;
 			prog_state = STATE_STOPPED; 
 			break;
 
