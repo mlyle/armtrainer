@@ -43,6 +43,11 @@ static inline char *to_hex16(uint16_t val)
 	return to_hex(val, 4);
 }
 
+static inline char *to_hex8(uint16_t val)
+{
+	return to_hex(val, 2);
+}
+
 static const struct instructions {
 	uint16_t mask;
 	uint16_t val;
@@ -115,7 +120,7 @@ static inline char decode_peel_reg(uint16_t insn, int offs)
 	return decode_peel_field(insn, offs, 3) + '0';
 }
 
-static inline void decode_insn(uint32_t addr, char *t, uint16_t insn)
+static inline void decode_insn(char *t, uint32_t addr, uint16_t insn)
 {
 	const struct instructions *insn_ent = find_insn(insn);
 

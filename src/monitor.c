@@ -134,6 +134,52 @@ static inline void blit_cursor(int x, int y)
 	lcd_blit_horiz(x, y+2, x+8, 15, 0, 0);
 }
 
+static inline void blit_insn(int y, uint32_t addr)
+{
+	char *tmp;
+
+	lcd_blit_box(0, y, 159, y+13, 0, 0, 0);
+
+	// 12345678
+	// AA IIII
+	// 5 pixel wide font, 40 pixels
+	// 120 pixels remain for 13 chars * 9 = 117
+
+	tmp = to_hex8(addr);
+
+	lcd_blit_smdigit_string(tmp, 0, y, 200, 200, 200,
+			0, 0, 0);
+
+	if (!address_valid_for_read(addr)) {
+		lcd_blit_smdigit_string("????", 15, y, 150, 150, 150,
+				0, 0, 0);
+	} else {
+		uint16_t insn = *((uint16_t *) addr);
+		tmp = to_hex16(addr);
+
+		lcd_blit_smdigit_string(tmp, 15, y, 150, 150, 150,
+				0, 0, 0);
+
+		char decoded_insn[14];
+
+		decode_insn(decoded_insn, addr, insn);
+
+		lcd_blit_string(decoded_insn, 40, y, 255, 255, 255,
+				0, 0, 0);
+	}
+}
+
+static inline void blit_insns()
+{
+	uint32_t addr = loaded_addr - 2;
+
+	for (int i=0; i<3; i++) {
+		blit_insn(58+i*13, addr);
+
+		addr += 2;
+	}
+}
+
 static inline void blit_addrval()
 {
 	char *addrhex = to_hex32(edit_addr);
@@ -209,15 +255,23 @@ static inline void blit_registers(struct EnhancedContextStateFrame_s *frame,
 		for (int i=0; i<4; i++) {
 			blit_register(i, i+4, frame->rh[i]);
 		}
-	} else {
+	} else if (what_to_show == 2) {
 		blit_register_name(0, "12", frame->csf.r12);
 		blit_register_name(1, "lr", frame->csf.lr);
 		blit_register_name(2, "rt", frame->csf.return_address);
 		blit_register_name(3, "xp", xpsr);
+	} else {
+		blit_insns();
 	}
 
-	/* XXX show surrounding instructions in another mode? */
-
+	if (what_to_show < 3) {
+		blit_flag_chars(run_fast, 114, 62, ' ', 'F');
+		blit_flag(xpsr & 0x80000000, 123, 62, 'n');
+		blit_flag(xpsr & 0x40000000, 132, 62, 'z');
+		blit_flag(xpsr & 0x20000000, 141, 62, 'c');
+		blit_flag(xpsr & 0x10000000, 150, 62, 'v');
+	}
+}
 
 static inline void blit_screen()
 {
