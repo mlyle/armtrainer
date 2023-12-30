@@ -152,7 +152,8 @@ void lcd_blit(int x, int y, uint8_t r, uint8_t g, uint8_t b)
 	lcd_blit_internal(x, y, r, g, b);
 }
 
-void lcd_blit_horiz(int x, int y, int x2, uint8_t r, uint8_t g, uint8_t b) {
+void lcd_blit_horiz(int x, int y, int x2, uint8_t r, uint8_t g, uint8_t b)
+{
 	for (int i=x; i <= x2; i++) {
 		lcd_blit_internal(i, y, r, g, b);
 	}
@@ -175,11 +176,17 @@ void lcd_getcolor(int x, int y, uint8_t *r, uint8_t *g, uint8_t *b)
 	}
 }
 
-void lcd_blit_rows(int y, int y2, uint8_t fr, uint8_t fg, uint8_t fb)
+void lcd_blit_box(int x, int y, int x2, int y2,
+		uint8_t r, uint8_t g, uint8_t b)
 {
-	for (int i=y; i<y2; i++) {
-		lcd_blit_horiz(0, i, 159, fr, fg, fb);
+	for (int i=y; i<=y2; i++) {
+		lcd_blit_horiz(x, i, x2, r, g, b);
 	}
+}
+
+void lcd_blit_rows(int y, int y2, uint8_t r, uint8_t g, uint8_t b)
+{
+	lcd_blit_box(0, y, 159, y2, r, g, b);
 }
 
 void lcd_move_up(int y, int y2, uint8_t fr, uint8_t fg, uint8_t fb)
@@ -223,6 +230,8 @@ int lcd_blit_string(const char *str, int x, int y, uint8_t r, uint8_t g, uint8_t
 		uint8_t bgr, uint8_t bgg, uint8_t bgb) {
 	while ((*str) && (x <= 150)) {
 		lcd_blit_char_internal(*str, x, y, r, g, b, bgr, bgg, bgb);
+		lcd_blit_box(x+8, y, x+8, y+12, bgr, bgg, bgb);
+
 		str++; x+=9;
 	}
 

@@ -8,6 +8,8 @@ int lcd_blit_string(const char *str, int x, int y, uint8_t r, uint8_t g, uint8_t
 void lcd_refresh();
 void lcd_blit_horiz(int x, int y, int x2, uint8_t r, uint8_t g, uint8_t b);
 void lcd_blit_rows(int y, int y2, uint8_t fr, uint8_t fg, uint8_t fb);
+void lcd_blit_box(int x, int y, int x2, int y2, uint8_t r,
+		uint8_t g, uint8_t b);
 void lcd_move_up(int y, int y2, uint8_t fr, uint8_t fg, uint8_t fb);
 void lcd_signalerror();
 void lcd_blit(int x, int y, uint8_t r, uint8_t g, uint8_t b);
