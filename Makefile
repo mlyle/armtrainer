@@ -24,7 +24,7 @@ STDPERIPH_SRC += misc.c
 
 STDPERIPH_SRC := $(patsubst %,libs/STM32F4xx_StdPeriph_Driver/src/%,$(STDPERIPH_SRC))
 OTHERLIB_SRC := $(wildcard libs/src/*.c)
-SHARED_SRC := $(wildcard shared/*.c) $(OTHERLIB_SRC) $(STDPERIPH_SRC)
+SHARED_SRC := $(OTHERLIB_SRC) $(STDPERIPH_SRC)
 MONITOR_SRC := $(wildcard src/*.c)
 
 SRC := $(SHARED_SRC) $(MONITOR_SRC)
@@ -59,7 +59,7 @@ CFLAGS += -DHSE_VALUE=25000000
 
 LDFLAGS := -nostartfiles -Wl,-static -lc -lgcc -Wl,--warn-common
 LDFLAGS += -Wl,--fatal-warnings -Wl,--gc-sections
-LDFLAGS += -Tshared/stm32f411.ld
+LDFLAGS += -Tsrc/stm32f411.ld
 
 all: build/ef_monitor.bin
 
