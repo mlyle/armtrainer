@@ -60,6 +60,9 @@ static int register_screen = 0;
 static bool show_decimal = false;
 static bool run_fast = false;
 
+#define GO_TO_LOADER_MAGIC 0xb00fbeef
+static uint32_t switch_to_loader __attribute__ ((section (".noinit")));
+
 int snake();
 
 __attribute__((naked))
@@ -87,6 +90,14 @@ void DebugMon_Handler(void)
 			"push {r4, r5, r6, r7, lr} \n"
 			"bl DebugMon_Handler_c \n"
 			"pop {r4, r5, r6, r7, pc} \n");
+}
+
+static void check_for_loader(enum matrix_keys key, bool pressed)
+{
+	if (key == key_b) {
+		switch_to_loader = GO_TO_LOADER_MAGIC;
+		NVIC_SystemReset();
+	}
 }
 
 static bool address_valid_for_write(uint32_t addr)
@@ -692,11 +703,30 @@ void code_invoke(uintptr_t addr)
 			: "r0", "r1", "r2", "r3", "r7" );
 }
 
+static void go_to_loader()
+{
+	static void (*SysMemBootJump) (void);
+
+	volatile uint32_t addr = 0x1FFF0000;	//The system memory start address
+	SysMemBootJump = (void (*)(void)) (*((uint32_t *)(addr + 4)));	//Point the PC to the System Memory reset vector
+
+	__ASM volatile ("MSR msp, %0\n" : : "r" (*(uint32_t *)addr));
+
+	SysMemBootJump();				//Run our virtual function defined above that sets the PC
+
+	while(1);
+}
+
 int main()
 {
 	bool osc_err = false;
 
 	RCC_DeInit();
+
+	if (switch_to_loader == GO_TO_LOADER_MAGIC) {
+		switch_to_loader = 0;
+		go_to_loader();
+	}
 
 	// Wait for internal oscillator settle.
 	while (RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET);
@@ -802,6 +832,10 @@ int main()
 	lcd_blit_string("Copyright", 0, 27, 0, 15, 15, 0, 0, 0);
 	lcd_blit_string("2021-23 M Lyle", 0, 40, 0, 15, 15, 0, 0, 0);
 	matrix_init();
+
+	matrix_set_callback(check_for_loader);
+	matrix_scanall();
+
 	matrix_set_callback(monitor_key_changed);
 
 	singlestep_enable();
