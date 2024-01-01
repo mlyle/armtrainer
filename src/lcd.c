@@ -202,13 +202,13 @@ static void lcd_blit_smdigit_internal(uint8_t c, int x, int y,
 	if (c == '?') {
 		c = 16;
 	} else {
-		if (c > 'a') {
+		if (c >= 'a') {
 			c = c - 'a' + 10;
-		} else if (c > 'A') {
+		} else if (c >= 'A') {
 			c = c - 'A' + 10;
 		} else if (c == '?') {
 			c = 17;
-		} else if (c > '0') {
+		} else if (c >= '0') {
 			c = c - '0';
 		}
 
@@ -227,6 +227,8 @@ static void lcd_blit_smdigit_internal(uint8_t c, int x, int y,
 			} else {
 				lcd_blit_internal(x+j, y, bgr, bgg, bgb);
 			}
+
+			tmp <<= 1;
 		}
 
 		lcd_blit_internal(x+4, y, bgr, bgg, bgb);
@@ -238,6 +240,8 @@ static void lcd_blit_smdigit_internal(uint8_t c, int x, int y,
 			} else {
 				lcd_blit_internal(x+j, y, bgr, bgg, bgb);
 			}
+
+			tmp <<= 1;
 		}
 
 		lcd_blit_internal(x+4, y, bgr, bgg, bgb);

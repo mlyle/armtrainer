@@ -183,6 +183,7 @@ static inline void decode_insn(char *t, uint32_t addr, uint16_t insn)
 	}
 
 	if (insn_ent->immed_br) {
+		*(t++) = ' ';
 		int16_t branch_offs = decode_peel_field_signext(insn,
 				insn_ent->immed, insn_ent->immed_len);
 
@@ -193,6 +194,7 @@ static inline void decode_insn(char *t, uint32_t addr, uint16_t insn)
 		t += 8;
 	} else {
 		if (insn_ent->immed) {
+			*(t++) = ' ';
 			int octlen = (insn_ent->immed_len+3) / 4;
 
 			uint16_t immed = decode_peel_field(insn,

@@ -158,7 +158,7 @@ static inline void blit_insn(int y, uint32_t addr, bool highlighted)
 
 	tmp = to_hex8(addr);
 
-	uint8_t l = highlighted ? 240 : 160;
+	uint8_t l = highlighted ? 15 : 12;
 
 	lcd_blit_smdigit_string(tmp, 0, y, l, l, l/4,
 			0, 0, 0);
@@ -186,7 +186,7 @@ static inline void blit_insns()
 {
 	uint32_t addr = loaded_addr - 2;
 
-	for (int i=0; i<3; i++) {
+	for (int i=0; i<4; i++) {
 		blit_insn(58+i*13, addr, addr == loaded_addr);
 
 		addr += 2;
