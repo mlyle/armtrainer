@@ -934,7 +934,7 @@ int main()
 
 	if (switch_to_loader == GO_TO_LOADER_MAGIC) {
 		for (int i = 0; i<8; i++) {
-			lcd_blit_string("going to loader", i*3, 13*i, 15-(i*2), 0, (i*2), 0, 0, 0);
+			lcd_blit_string("going to loader", 1+i*3, 9+13*i, 15-(i*2), 0, (i*2), 0, 0, 0);
 		}
 		lcd_refresh();
 
