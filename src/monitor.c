@@ -945,7 +945,6 @@ int main()
 	lcd_blit_string("MPTrainer V0.4", 0, 1, 15, 15, 0, 0, 0, 0);
 	lcd_blit_string("Copyright", 0, 27, 0, 15, 15, 0, 0, 0);
 	lcd_blit_string("2021-23 M Lyle", 0, 40, 0, 15, 15, 0, 0, 0);
-	lcd_refresh();
 
 	/* Invoke monitor */
 	matrix_set_callback(monitor_key_changed);
