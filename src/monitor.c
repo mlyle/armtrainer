@@ -895,7 +895,7 @@ int main()
 	// Wait for the PLL to be ready.
 	while (RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET);
 
-	SysTick_Config(60000000/200);	/* 200Hz systick */
+	SysTick_Config(60000000/SYSTICK_HZ);
 
 	/* This ordering is necessary to allow systick and syscall to
 	** be prioritized over debugmonitor.  Effectively this means that
