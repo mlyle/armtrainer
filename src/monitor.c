@@ -5,6 +5,7 @@
 #include <led.h>
 #include <lcdutil.h>
 #include <stringutil.h>
+#include <thumbdisasm.h>
 
 #include <armdio.h>
 
