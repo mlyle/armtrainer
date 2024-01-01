@@ -49,6 +49,12 @@ enum progrun_state {
 	STATE_RUN
 } prog_state;
 
+/* Flag if something went wrong with oscillator startup.
+ * Right now this causes us to panic, but there's no firm reason for
+ * this -- we could work fine from RC oscillator.
+ */
+static bool osc_err = false;
+
 /* State machine for keypad editing addresses/values */
 static bool editing_addr = true;
 static uint8_t edit_pos = 0;
@@ -784,7 +790,6 @@ static void check_for_loader(enum matrix_keys key, bool pressed)
 {
 	if (key == key_b) {
 		switch_to_loader = GO_TO_LOADER_MAGIC;
-		NVIC_SystemReset();
 	}
 }
 
@@ -802,16 +807,9 @@ static void go_to_loader()
 	while(1);
 }
 
-int main()
+static void program_clocks()
 {
-	bool osc_err = false;
-
 	RCC_DeInit();
-
-	if (switch_to_loader == GO_TO_LOADER_MAGIC) {
-		switch_to_loader = 0;
-		go_to_loader();
-	}
 
 	// Wait for internal oscillator settle.
 	while (RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET);
@@ -896,11 +894,25 @@ int main()
 	while (RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET);
 
 	SysTick_Config(60000000/SYSTICK_HZ);
+}
+
+int main()
+{
+	if (switch_to_loader == GO_TO_LOADER_MAGIC) {
+		switch_to_loader = 0;
+		go_to_loader();
+	}
+
+	program_clocks();
 
 	/* This ordering is necessary to allow systick and syscall to
 	** be prioritized over debugmonitor.  Effectively this means that
 	** single step does not follow them and that systick is highest
 	** priority.
+	**
+	** Note the monitor immediately returns when PC is in flash.
+	** So this is not required for correctness, but it is a significant
+	** performance difference.
 	*/
 	NVIC_SetPriority(DebugMonitor_IRQn, 2);
 	NVIC_SetPriority(SVCall_IRQn, 1);
@@ -912,17 +924,31 @@ int main()
 		led_panic("oscfail");
 	}
 
-	lcd_init();
-	lcd_blit_string("MPTrainer V0.4", 0, 1, 15, 15, 0, 0, 0, 0);
-	lcd_blit_string("Copyright", 0, 27, 0, 15, 15, 0, 0, 0);
-	lcd_blit_string("2021-23 M Lyle", 0, 40, 0, 15, 15, 0, 0, 0);
 	matrix_init();
 
+	/* Check for key held at startup */
 	matrix_set_callback(check_for_loader);
 	matrix_scanall();
 
-	matrix_set_callback(monitor_key_changed);
+	lcd_init();
 
+	if (switch_to_loader == GO_TO_LOADER_MAGIC) {
+		for (int i = 0; i<8; i++) {
+			lcd_blit_string("going to loader", i*3, 13*i, 15-(i*2), 0, (i*2), 0, 0, 0);
+		}
+		lcd_refresh();
+
+		while (!lcd_is_ready());
+		NVIC_SystemReset();
+	}
+
+	lcd_blit_string("MPTrainer V0.4", 0, 1, 15, 15, 0, 0, 0, 0);
+	lcd_blit_string("Copyright", 0, 27, 0, 15, 15, 0, 0, 0);
+	lcd_blit_string("2021-23 M Lyle", 0, 40, 0, 15, 15, 0, 0, 0);
+	lcd_refresh();
+
+	/* Invoke monitor */
+	matrix_set_callback(monitor_key_changed);
 	singlestep_enable();
 	code_invoke(0x20000000);
 }
