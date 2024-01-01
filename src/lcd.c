@@ -420,14 +420,16 @@ void lcd_init()
 		(1 << 3 /*SPI_CR1_BR_Pos*/) | SPI_CR1_SPE;
 	lcd_spi->CR2 = SPI_CR2_TXDMAEN;
 
-	// After 50ms, exit reset
-	delay_ms(50);
+	// After a couple of ms, exit reset
+	delay_ms(2);
 	DIOHigh(lcd_rst);
 
-	delay_ms(100);
+	delay_ms(10);			// Must wait at least 5ms before sending
+					// commands.
 
 	lcd_send_command(0x11);		// Sleep out command
-	delay_ms(220);
+	delay_ms(150);			// Necessary to wait at least 120ms
+					// before sending commands.
 
 	lcd_send_command(0x20);		// set noninverted
 
@@ -439,8 +441,6 @@ void lcd_init()
 
 	lcd_send_command(0x26);
 	lcd_send_data(0x04);		// Hopefully select a reasonable gamma
-
-	lcd_send_command(0x29);		// Display on
 
 	lcd_send_command(0x2a);		// Column addresses -- 0 .. 159
 	lcd_send_data(0);
@@ -458,4 +458,10 @@ void lcd_init()
 
 	/* Draw black screen */
 	lcd_refresh();
+
+	lcd_dma_wait_finish();
+
+	lcd_send_command(0x29);		// Display on
+
+	lcd_send_command(0x2c);		// Ram WRITE command
 }
