@@ -335,6 +335,13 @@ void lcd_refresh()
 	}
 
 	lcd_send_data_bulk(lcd_fbuf, sizeof(lcd_fbuf));
+
+	/* First frame: wait for finish and turn on display */
+	if (lcd_framecount == 1) {
+		lcd_dma_wait_finish();
+		lcd_send_command(0x29);		// Display on
+		lcd_send_command(0x2c);		// Ram WRITE command
+	}
 }
 
 void lcd_signalerror()
@@ -453,15 +460,6 @@ void lcd_init()
 	lcd_send_data(0);
 	lcd_send_data(0);
 	lcd_send_data(127);
-
-	lcd_send_command(0x2c);		// Ram WRITE command
-
-	/* Draw black screen */
-	lcd_refresh();
-
-	lcd_dma_wait_finish();
-
-	lcd_send_command(0x29);		// Display on
 
 	lcd_send_command(0x2c);		// Ram WRITE command
 }
