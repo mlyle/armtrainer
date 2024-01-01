@@ -54,17 +54,36 @@ static uint8_t edit_pos = 0;
 static uint32_t edit_addr = 0;
 static uint32_t loaded_addr = 0;
 static uint32_t edit_val = 0;
+
+/* The current stack frame.  This is a global so that we can redraw
+ * the screen without passing this everywhere.
+ */
 static struct EnhancedContextStateFrame_s *global_frame;
 
+/* Which screen of registers should be shown right now */
 static int register_screen = 0;
+
+/* Flag: Show registers in decimal instead of hex */
 static bool show_decimal = false;
+
+/* Flag: Don't wait for screen redraws to proceed with next instruction
+ * in run mode.  Still a tiny fraction of native speed, but dozens of
+ * times faster than being synchronous to display refresh.
+ */
 static bool run_fast = false;
 
+/* Special variable to detect that we have been through a reset and we
+ * are requested to go to loader.   Explained in comment above
+ * check_for_loader()
+ */
 #define GO_TO_LOADER_MAGIC 0xb00fbeef
 static uint32_t switch_to_loader __attribute__ ((section (".noinit")));
 
 int snake();
 
+/* Shims for C handlers for SVCall, DebugMon, etc.  These get the
+ * ContextStateFrame into an argument for C code to use.
+ */
 __attribute__((naked))
 void SVCall_Handler(void)
 {
@@ -92,14 +111,7 @@ void DebugMon_Handler(void)
 			"pop {r4, r5, r6, r7, pc} \n");
 }
 
-static void check_for_loader(enum matrix_keys key, bool pressed)
-{
-	if (key == key_b) {
-		switch_to_loader = GO_TO_LOADER_MAGIC;
-		NVIC_SystemReset();
-	}
-}
-
+/* Is this in first 32k of ram, and 2-byte aligned? */
 static bool address_valid_for_write(uint32_t addr)
 {
 	if (addr & 1) {
@@ -113,6 +125,7 @@ static bool address_valid_for_write(uint32_t addr)
 	return false;
 }
 
+/* Is this in RAM or flash? */
 static bool address_valid_for_read(uint32_t addr)
 {
 	if (address_valid_for_write(addr)) {
@@ -130,21 +143,9 @@ static bool address_valid_for_read(uint32_t addr)
 	return false;
 }
 
-static inline void clear_cursor(int y)
-{
-	lcd_blit_horiz(0, y, 159, 0, 0, 0);
-	lcd_blit_horiz(0, y+1, 159, 0, 0, 0);
-	lcd_blit_horiz(0, y+2, 159, 0, 0, 0);
-}
-
-static inline void blit_cursor(int x, int y)
-{
-	clear_cursor(y);
-	lcd_blit_horiz(x+3, y, x+5, 15, 0, 0);
-	lcd_blit_horiz(x+2, y+1, x+6, 15, 0, 0);
-	lcd_blit_horiz(x, y+2, x+8, 15, 0, 0);
-}
-
+/* Disassembles and outputs a short listing around the current
+ * address.
+ */
 static inline void blit_insn(int y, uint32_t addr, bool highlighted)
 {
 	const char *tmp;
@@ -193,6 +194,23 @@ static inline void blit_insns()
 	}
 }
 
+/* LCD routines for keeping a cursor on the address/value row */
+static inline void clear_cursor(int y)
+{
+	lcd_blit_horiz(0, y, 159, 0, 0, 0);
+	lcd_blit_horiz(0, y+1, 159, 0, 0, 0);
+	lcd_blit_horiz(0, y+2, 159, 0, 0, 0);
+}
+
+static inline void blit_cursor(int x, int y)
+{
+	clear_cursor(y);
+	lcd_blit_horiz(x+3, y, x+5, 15, 0, 0);
+	lcd_blit_horiz(x+2, y+1, x+6, 15, 0, 0);
+	lcd_blit_horiz(x, y+2, x+8, 15, 0, 0);
+}
+
+/* Blitting the address/value row */
 static inline void blit_addrval()
 {
 	const char *addrhex = to_hex32(edit_addr);
@@ -216,6 +234,9 @@ static inline void blit_addrval()
 	}
 }
 
+/* If there's room, display condition codes on the screen.
+ * Also show the hidden "fast" flag
+ */
 static inline void blit_flag_chars(int flag, int x, int y, char f, char g)
 {
 	if (flag) {
@@ -230,6 +251,7 @@ static inline void blit_flag(int flag, int x, int y, char f)
 	blit_flag_chars(flag, x, y, f, toupper(f));
 }
 
+/* Implementation of displaying registers on the LCD */
 static inline void blit_register_name(int lineno, const char *regn,
 		uint32_t val)
 {
@@ -288,6 +310,7 @@ static inline void blit_registers(struct EnhancedContextStateFrame_s *frame,
 	}
 }
 
+/* Blit the entire screen.  Block until we can begin scanning it */
 static inline void blit_screen()
 {
 	blit_addrval();
@@ -295,6 +318,7 @@ static inline void blit_screen()
 	lcd_refresh();
 }
 
+/* Logic to load from memory, and update cursors */
 static bool perform_load_impl()
 {
 	edit_addr &= 0xfffffffe;	/* Align */
@@ -314,6 +338,10 @@ static bool perform_load_impl()
 	return true;
 }
 
+/* This routine is invoked once for each instruction run.
+ * It's the actual meat of the debug monitor, displaying everything
+ * on the screen and making the system work-- though a lot of the
+ * magic happens in keyboard callbacks. */
 void DebugMon_Handler_c(struct EnhancedContextStateFrame_s *frame)
 {
 	if ((frame->csf.return_address & 0xff000000) == 0x08000000) {
@@ -325,12 +353,17 @@ void DebugMon_Handler_c(struct EnhancedContextStateFrame_s *frame)
 
 	edit_addr = frame->csf.return_address;
 
+	/* Get the contents of edit_addr, and set up cursors */
 	perform_load_impl();
 
 	editing_addr = true;
 	edit_pos = 0;
 
 	if (run_fast) {
+		/* In run fast mode, we scan the keys for each
+		 * instruction, but only blit the screen if the
+		 * screen is idle (or we're stopped).
+		 */
 		do {
 			matrix_scanall();
 
@@ -339,6 +372,9 @@ void DebugMon_Handler_c(struct EnhancedContextStateFrame_s *frame)
 			}
 		} while (prog_state == STATE_STOPPED);
 	} else {
+		/* In normal mode, we wait for the LCD to be
+		 * ready and then blit it.
+		 */
 		do {
 			while (!lcd_is_ready()) {
 				matrix_scanall();
@@ -348,6 +384,9 @@ void DebugMon_Handler_c(struct EnhancedContextStateFrame_s *frame)
 		} while (prog_state == STATE_STOPPED);
 	}
 
+	/* If we're single stepping, next time we're here we should
+	 * stop.
+	 */
 	if (prog_state == STATE_STEP) {
 		prog_state = STATE_STOPPED;
 	}
@@ -356,6 +395,8 @@ void DebugMon_Handler_c(struct EnhancedContextStateFrame_s *frame)
 		frame->csf.return_address = edit_addr;
 	}
 }
+
+/* Update the core debug flags to disable/enable single step. */
 
 static inline void singlestep_disable()
 {
@@ -370,6 +411,7 @@ static inline void singlestep_enable()
 		CoreDebug_DEMCR_MON_STEP_Msk;
 }
 
+/* Handle a keypress of a digit */
 static void edit_key_digit(int digit)
 {
 	uint32_t *edited = &edit_val;
@@ -390,6 +432,8 @@ static void edit_key_digit(int digit)
 	}
 }
 
+/* This handle a load keypress-- including advancing in memory if
+ * load is hit repeatedly */
 static void perform_load(bool repeated)
 {
 	if ((!editing_addr) && (repeated)) {
@@ -420,6 +464,9 @@ static void perform_store()
 	perform_load(false);
 }
 
+/* This is the main keypress handler-- invoked when the code
+ * is stopped.
+ */
 static void edit_key(enum matrix_keys key, bool pressed)
 {
 	static bool load_held;
@@ -427,6 +474,15 @@ static void edit_key(enum matrix_keys key, bool pressed)
 
 	static enum matrix_keys last_key;
 
+	/* We don't really care about released keys, except load.
+	 * Load is processed on release instead of when it is
+	 * struck.  This lets us use load as a modifier key with
+	 * additional shortcuts.
+	 *
+	 * Why load as a modifier?  Because it's nice and harmless,
+	 * usually.  And because it's the key that seems best to
+	 * delay until release.
+	 */
 	if (!pressed) {
 		if (key == key_load) {
 			if (!did_combination) {
@@ -442,6 +498,11 @@ static void edit_key(enum matrix_keys key, bool pressed)
 		return;
 	}
 
+	/* Everything below this point is for when the key is
+	 * depressed (rather than released).
+	 *
+	 * First, handle the case where load is held down:
+	 */
 	if (load_held) {
 		did_combination = true;
 		switch (key) {
@@ -467,6 +528,8 @@ static void edit_key(enum matrix_keys key, bool pressed)
 				break;
 		}
 	} else {
+		/* Key is pressed, and it's not modified by load
+		 * being held.  This is the straightforward case */
 		switch (key) {
 			case key_clr:
 				if (edit_pos != 0) {
@@ -551,7 +614,12 @@ static void monitor_key_changed(enum matrix_keys key, bool pressed)
 	};
 }
 
-
+/* These are various "system calls" or virtual instructions to
+ * do higher level things on behalf of the user...
+ *
+ * Because doing I/O, blitting the screen, etc, is too painful
+ * for students at first.
+ */
 void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 {
 	uint8_t *call = (uint8_t *) (frame->return_address - 2);
@@ -686,6 +754,9 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 	}
 }
 
+/* This is the code that branches to the user program at first (and
+ * indirectly invokes the monitor).
+ */
 void code_invoke(uintptr_t addr)
 {
 	asm volatile(
@@ -697,6 +768,23 @@ void code_invoke(uintptr_t addr)
 			"MOV PC, %[addr]\n"
 			: : [addr]"r"(addr)
 			: "r0", "r1", "r2", "r3", "r7" );
+}
+
+/*
+ * This function is a keyboard matrix callback.  It's used only once
+ * in scanning the keyboard, at start.  The main purpose is to detect
+ * that 'B' is held at power-on (or reset) to trigger a reset where
+ * we'll go straight to the bootloader.
+ *
+ * We reset to reach the bootloader to be in a relatively virgin state
+ * where peripherals are not initialized, etc.
+ */
+static void check_for_loader(enum matrix_keys key, bool pressed)
+{
+	if (key == key_b) {
+		switch_to_loader = GO_TO_LOADER_MAGIC;
+		NVIC_SystemReset();
+	}
 }
 
 static void go_to_loader()
