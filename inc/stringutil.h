@@ -187,7 +187,7 @@ static inline void decode_insn(char *t, uint32_t addr, uint16_t insn)
 		int16_t branch_offs = decode_peel_field_signext(insn,
 				insn_ent->immed, insn_ent->immed_len);
 
-		uint32_t branch_dest = addr + 2 + branch_offs;
+		uint32_t branch_dest = addr + 4 + (branch_offs*2);
 
 		to_hex_buf(t, branch_dest, 8);
 
