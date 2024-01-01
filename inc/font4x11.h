@@ -1,11 +1,14 @@
-/* 4x12 font, hex digits, by MPL; CC0 */
-/* Bottom row is not used, so really 4x11. */
-
-/* 0 .... 1 ...# 2 ..#. 3 ..##
- * 4 .#.. 5 .#.# 6 .##. 7 .###
- * 8 #... 9 #..# A #.#. B #.##
- * C ##.. D ##.# E ###. F ####
+/* This 4x12 typeface by Michael Lyle is marked with CC0 1.0 Universal.
+ * To view a copy of this license, visit
+ * http://creativecommons.org/publicdomain/zero/1.0
  */
+
+/* Bottom row is not used, so really 4x11. 
+ * Each nibble represents one row.
+ *
+ * Characters: 01234567890?·
+ */
+
 const uint8_t font_4x12_rasters[][6] = {
 	/* 0 */
 	{ 0x69, 0x99, 0x99, 0x99, 0x99, 0x60 },
