@@ -166,7 +166,7 @@ static inline void blit_insn(int y, uint32_t addr, bool highlighted)
 
 	tmp = to_hex8(addr);
 
-	uint8_t l = highlighted ? 15 : 12;
+	uint8_t l = highlighted ? 15 : 10;
 
 	lcd_blit_smdigit_string(tmp, 0, y, l, l, l/4,
 			0, 0, 0);
@@ -176,7 +176,7 @@ static inline void blit_insn(int y, uint32_t addr, bool highlighted)
 				0, 0, 0);
 	} else {
 		uint16_t insn = *((uint16_t *) addr);
-		tmp = to_hex16(addr);
+		tmp = to_hex16(insn);
 
 		lcd_blit_smdigit_string(tmp, 15, y, l/4, l/2, l,
 				0, 0, 0);
