@@ -807,6 +807,38 @@ static void go_to_loader()
 	while(1);
 }
 
+static void diagnostic_clockout()
+{
+	const DIOTag_t diag_out = GPIOA_DIO(6);	/* PA6, TIM3_CH1, AF2 */
+
+	DIOSetAltfuncOutput(diag_out, 2, false, DIO_DRIVE_STRONG);
+
+	TIM3->CR1 = TIM_CR1_CEN;
+	TIM3->SMCR = 0;
+	TIM3->PSC = 0;	/* No prescaler */
+	TIM3->ARR = 1;	/* Count between 0 and 1 */
+
+
+	/* "In upcounting, channel 1 is active as long as TIMx_CNT<TIMx_CCR1
+	 * else inactive"   1 should result in 50% duty cycle and half system
+	 * clock (30MHz) */
+
+	TIM3->CCR1 = 1;
+
+	/* "The PWM mode can be selected independently on each channel (one
+	 * PWM per OCx output) by writing 110 (PWM mode 1) or ‘111 (PWM
+	 * mode 2) in the OCxM bits in the TIMx_CCMRx register. The
+	 * corresponding preload register must be enabled by setting the
+	 * OCxPE bit in the TIMx_CCMRx register"
+	 */
+
+	TIM3->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1;
+	TIM3->CCMR1 |= TIM_CCMR1_OC1PE;
+	TIM3->EGR = TIM_EGR_UG;
+
+	TIM3->CCER |= TIM_CCER_CC1E;
+}
+
 static void program_clocks()
 {
 	RCC_DeInit();
@@ -904,6 +936,8 @@ int main()
 	}
 
 	program_clocks();
+
+	diagnostic_clockout();
 
 	/* This ordering is necessary to allow systick and syscall to
 	** be prioritized over debugmonitor.  Effectively this means that
