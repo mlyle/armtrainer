@@ -740,7 +740,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 
 
 		case 0x45:		/* 'E', hidden secret snake syscall... */
-			/* 2053 214e 2241 234b df45 */
+			/* 2053 214e 2241 234b df45 e7f8 */
 			if ((frame->r[0] != 'S') ||
 					(frame->r[1] != 'N') ||
 					(frame->r[2] != 'A') ||
@@ -748,12 +748,20 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 				return;
 			}
 
-			singlestep_disable();
+			/* Don't disable singlestep here.
+			 * We already have the NVIC programmed to mask debug
+			 * when we're in a SVC.
+			 *
+			 * It seems to result in us skipping the next
+			 * instruction after debug exit.
+			 */
+			/* singlestep_disable(); */
 			lcd_blit_string("snake!!!", 24, 58, 0, 0, 0, 4, 15, 4);
 			lcd_blit_string("use 4569", 24, 71, 4, 15, 4, 0, 0, 0);
 
 			frame->r[2] = snake();
-			singlestep_enable();
+
+			/* singlestep_enable(); */
 			prog_state = STATE_STOPPED;
 			break;
 		default:
