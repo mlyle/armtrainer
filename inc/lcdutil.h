@@ -19,6 +19,11 @@ void lcd_blit(int x, int y, uint8_t r, uint8_t g, uint8_t b);
 void lcd_getcolor(int x, int y, uint8_t *r, uint8_t *g, uint8_t *b);
 bool lcd_is_ready();
 
+/* Waits for display operations to complete, and releases the LCD CS,
+ * in preparation for SD io.
+ */
+void lcd_release();
+
 void lcd_init();
 
 #endif

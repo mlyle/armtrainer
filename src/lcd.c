@@ -324,6 +324,13 @@ bool lcd_is_ready()
 	return false;
 }
 
+void lcd_release()
+{
+	lcd_dma_wait_finish();
+	DIOHigh(lcd_cs);
+	delay_loop(100);
+}
+
 void lcd_refresh()
 {
 	lcd_dma_wait_finish();
