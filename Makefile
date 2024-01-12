@@ -55,10 +55,20 @@ else
     CFLAGS += -Werror
 endif
 
-CFLAGS += -DHSE_VALUE=25000000
 
 LDFLAGS := -nostartfiles -Wl,-static -lc -lgcc -Wl,--warn-common
 LDFLAGS += -Wl,--fatal-warnings -Wl,--gc-sections
+
+# Old hardware, rev A
+#CFLAGS += -DOLD_HW
+#LDFLAGS += -Tsrc/memory-f411.ld
+# New hardware, rev B or later
+LDFLAGS += -Tsrc/memory-f412.ld
+
+
+CFLAGS += -DHSE_VALUE=25000000
+
+
 LDFLAGS += -Tsrc/stm32f411.ld
 
 all: build/ef_monitor.bin
@@ -78,7 +88,7 @@ build/monitor.stack: $(OBJ) build/monitor
 	./misc/avstack.pl $(OBJ) >> $@
 
 build/monitor: $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o $@ -Tsrc/memory.ld $(LDFLAGS)
+	$(CC) $(CFLAGS) $(OBJ) -o $@ $(LDFLAGS)
 
 clean:
 	rm -rf $(BUILD_DIR)

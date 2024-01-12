@@ -7,12 +7,22 @@
 #include <stm32f4xx.h>
 
 /* For ST7735S 160x128 display */
+
+#ifdef OLD_HW
+static DIOTag_t lcd_rst = GPIOC_DIO(15);
+static DIOTag_t lcd_cs = GPIOB_DIO(9);
+static DIOTag_t lcd_a0 = GPIOC_DIO(14);
+static DIOTag_t lcd_mosi = GPIOB_DIO(15); // AF05
+static DIOTag_t lcd_sck = GPIOB_DIO(13);  // AF05
+static SPI_TypeDef *lcd_spi = SPI2;
+#else
 static DIOTag_t lcd_rst = GPIOB_DIO(7);
 static DIOTag_t lcd_cs = GPIOB_DIO(10);
 static DIOTag_t lcd_a0 = GPIOB_DIO(6);
 static DIOTag_t lcd_mosi = GPIOB_DIO(15); // AF05
 static DIOTag_t lcd_sck = GPIOB_DIO(13);  // AF05
 static SPI_TypeDef *lcd_spi = SPI2;
+#endif
 
 /* DMA1 Stream 4 Channel 0: SPI TX */
 static DMA_Stream_TypeDef *lcd_dma_stream = DMA1_Stream4;

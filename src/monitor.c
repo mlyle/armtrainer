@@ -960,7 +960,11 @@ int main()
 	NVIC_SetPriority(SVCall_IRQn, 1);
 	NVIC_SetPriority(SysTick_IRQn, 0);
 
+#ifdef OLD_HW
+	led_init_pin(GPIOC, GPIO_Pin_13, true);
+#else
 	led_init_pin(GPIOA, GPIO_Pin_15, true);
+#endif
 
 	if (osc_err) {
 		led_panic("oscfail");

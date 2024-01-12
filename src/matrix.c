@@ -4,6 +4,30 @@
 
 #define NELEMENTS(x) (sizeof(x) / sizeof(*(x)))
 
+#ifdef OLD_HW
+static DIOTag_t matrix_outps[] = {
+        GPIOA_DIO(15),
+        GPIOA_DIO(12),
+        GPIOA_DIO(11),
+        GPIOA_DIO(10),
+        GPIOA_DIO(9),
+        GPIOA_DIO(8),
+};
+
+static DIOTag_t matrix_inps[] = {
+        GPIOB_DIO(6),
+        GPIOB_DIO(5),
+        GPIOB_DIO(4),
+        GPIOB_DIO(3),
+};
+
+#ifdef MATRIX_LED
+static DIOTag_t matrix_led = GPIOC_DIO(13);
+static uint32_t matrix_scan_count;
+#endif
+
+#else /* OLD_HW */
+
 static DIOTag_t matrix_outps[] = {
 	GPIOA_DIO(5),
 	GPIOA_DIO(4),
@@ -20,9 +44,11 @@ static DIOTag_t matrix_inps[] = {
 	GPIOC_DIO(6),
 };
 
-#ifdef MATRIX_LED
+#ifdef matrix_led
 static DIOTag_t matrix_led = GPIOA_DIO(15);
 static uint32_t matrix_scan_count;
+#endif
+
 #endif
 
 static uint8_t outp_statuses[NELEMENTS(matrix_outps)];
