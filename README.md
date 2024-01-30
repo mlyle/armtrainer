@@ -29,7 +29,7 @@ By a student, Robin K:
 
 ## TODO
 
-* Update picture for revision 2 (SMT, has the ARM on board and is able to be fully sourced by JLCPCB except for keyboard switches).
 * Relative branches were difficult for students to compute.  Finding a better way to explain this, in both lessons and manuals, would be helpful.
 * The manual should be updated with some of the system calls that have not been documented and perhaps
+* Manual should be updated to include details of usage of the ARM trainer.
 * Overall curriculum, etc, should get posted here.
