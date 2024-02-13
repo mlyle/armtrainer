@@ -1,6 +1,7 @@
 #include <armdio.h>
 #include <delayutil.h>
 #include <matrix.h>
+#include <systick_handler.h>
 
 #define NELEMENTS(x) (sizeof(x) / sizeof(*(x)))
 
@@ -44,7 +45,7 @@ static DIOTag_t matrix_inps[] = {
 	GPIOC_DIO(6),
 };
 
-#ifdef matrix_led
+#ifdef MATRIX_LED
 static DIOTag_t matrix_led = GPIOA_DIO(15);
 static uint32_t matrix_scan_count;
 #endif
@@ -55,6 +56,9 @@ static uint8_t outp_statuses[NELEMENTS(matrix_outps)];
 
 static matrix_cb_t matrix_callback;
 
+static enum matrix_keys debounce_last;
+static uint32_t debounce_time;
+
 /* This is the keymap rotated 90 degrees CCW */
 static const enum matrix_keys keymap[NELEMENTS(matrix_inps) * NELEMENTS(matrix_outps)] = {
 	key_0, key_4, key_8, key_c,
@@ -64,6 +68,18 @@ static const enum matrix_keys keymap[NELEMENTS(matrix_inps) * NELEMENTS(matrix_o
 	key_load, key_store, key_addr, key_clr,
 	key_run, key_step, key_invalid, key_invalid
 };
+
+static inline bool debounce_expired()
+{
+	int32_t difference = systick_cnt - debounce_time;
+
+	// 20 ms
+	if (difference >= 4) {
+		return true;
+	} else {
+		return false;
+	}
+}
 
 void matrix_scanstep()
 {
@@ -81,14 +97,19 @@ void matrix_scanstep()
 		if (old_status != pin) {
 			enum matrix_keys key = keymap[cur_outp * NELEMENTS(matrix_inps) + i];
 
-			if (matrix_callback) {
-				matrix_callback(key, pin);
-			}
+			if ((key != debounce_last) || debounce_expired()) {
+				debounce_last = key;
+				debounce_time = systick_cnt;
 
-			if (pin) {
-				outp_stat |= inp_mask;
-			} else {
-				outp_stat &= ~inp_mask;
+				if (matrix_callback) {
+					matrix_callback(key, pin);
+				}
+
+				if (pin) {
+					outp_stat |= inp_mask;
+				} else {
+					outp_stat &= ~inp_mask;
+				}
 			}
 		}
 		inp_mask <<= 1;

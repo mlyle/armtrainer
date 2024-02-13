@@ -33,4 +33,3 @@ By a student, Robin K:
 * The manual should be updated with some of the system calls that have not been documented and perhaps
 * Manual should be updated to include details of usage of the ARM trainer.
 * Overall curriculum, etc, should get posted here.
-* Now that the keypad is scanned more quickly, debouncing keys has become more important.  Debounce them in software.
