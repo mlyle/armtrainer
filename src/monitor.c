@@ -565,8 +565,11 @@ static void edit_key(enum matrix_keys key, bool pressed)
 
 			case key_8:
 			case key_9:
-			case key_a:
 				do_load(key - key_8);
+				break;
+
+			case key_a:
+				do_load(2);
 				break;
 
 			case key_d:
