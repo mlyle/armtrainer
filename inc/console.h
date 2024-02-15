@@ -8,6 +8,7 @@ void console_cr();
 void console_nl();
 void console_char_norefresh(uint8_t c);
 void console_char(uint8_t c);
+void console_str(char *str);
 void console_clearscreen();
 void console_number_10(uint32_t n);
 void console_number_16(uint32_t n);

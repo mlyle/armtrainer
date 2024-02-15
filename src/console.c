@@ -66,6 +66,16 @@ void console_char(uint8_t c)
 	lcd_refresh();
 }
 
+void console_str(char *str)
+{
+	while (*str) {
+		console_char_norefresh(*str);
+		str++;
+	}
+
+	lcd_refresh();
+}
+
 void console_clearscreen()
 {
 	lcd_blit_rows(0, 53, 0, 0, 0);
