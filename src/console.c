@@ -82,11 +82,8 @@ void console_clearscreen()
 	draw_column = 0;
 }
 
-void console_number_10(uint32_t n)
+void console_number_10_nocr(uint32_t n)
 {
-	console_cr();
-	console_nl();
-
 	if (!n) {
 		console_char('0');
 		return;
@@ -109,6 +106,14 @@ void console_number_10(uint32_t n)
 	}
 
 	lcd_refresh();
+}
+
+void console_number_10(uint32_t n)
+{
+	console_cr();
+	console_nl();
+
+	console_number_10_nocr(n);
 }
 
 void console_number_16(uint32_t n)

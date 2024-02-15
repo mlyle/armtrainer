@@ -474,26 +474,32 @@ static void perform_store()
 
 static void do_save(int slot)
 {
-	console_str("Save #");
-	console_number_10(slot);
+	console_str("\r\nSave #");
+	console_number_10_nocr(slot);
 
 	if (save_writesave(slot)) {
 		console_str(": OK");
 	} else {
 		console_str(": FAIL");
 	}
+
+	perform_load_impl();
 }
 
 static void do_load(int slot)
 {
-	console_str("Load #");
-	console_number_10(slot);
+	console_str("\r\nLoad #");
+	console_number_10_nocr(slot);
 
 	if (save_readsave(slot)) {
 		console_str(": OK");
 	} else {
 		console_str(": FAIL");
 	}
+
+	edit_addr = 0x20000000;
+
+	perform_load_impl();
 }
 
 /* This is the main keypress handler-- invoked when the code

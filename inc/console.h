@@ -10,6 +10,7 @@ void console_char_norefresh(uint8_t c);
 void console_char(uint8_t c);
 void console_str(char *str);
 void console_clearscreen();
+void console_number_10_nocr(uint32_t n);
 void console_number_10(uint32_t n);
 void console_number_16(uint32_t n);
 void console_blit_dot(uint32_t color, uint8_t x, uint8_t y);
