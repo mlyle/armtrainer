@@ -4,6 +4,7 @@
 
 #include <led.h>
 #include <lcdutil.h>
+#include <save.h>
 #include <stringutil.h>
 #include <thumbdisasm.h>
 
@@ -471,6 +472,30 @@ static void perform_store()
 	perform_load(false);
 }
 
+static void do_save(int slot)
+{
+	console_str("Save #");
+	console_number_10(slot);
+
+	if (save_writesave(slot)) {
+		console_str(": OK");
+	} else {
+		console_str(": FAIL");
+	}
+}
+
+static void do_load(int slot)
+{
+	console_str("Load #");
+	console_number_10(slot);
+
+	if (save_readsave(slot)) {
+		console_str(": OK");
+	} else {
+		console_str(": FAIL");
+	}
+}
+
 /* This is the main keypress handler-- invoked when the code
  * is stopped.
  */
@@ -525,6 +550,19 @@ static void edit_key(enum matrix_keys key, bool pressed)
 			case key_3:
 				register_screen = 3;
 				break;
+
+			case key_4:
+			case key_5:
+			case key_6:
+				do_save(key - key_4);
+				break;
+
+			case key_8:
+			case key_9:
+			case key_a:
+				do_load(key - key_8);
+				break;
+
 			case key_d:
 				show_decimal = !show_decimal;
 				break;
