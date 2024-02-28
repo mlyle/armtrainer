@@ -137,7 +137,7 @@ static inline void decode_insn(char *t, uint32_t addr, uint16_t insn)
 	if (insn_ent->rd) {
 		*(t++) = ' ';
 		*(t++) = 'r';
-		*(t++) = decode_peel_reg(insn, insn_ent->rn);
+		*(t++) = decode_peel_reg(insn, insn_ent->rd);
 	}
 
 	*t = 0;
