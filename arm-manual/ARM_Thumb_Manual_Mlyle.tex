@@ -1,19 +1,23 @@
 \documentclass[12pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[hidelinks,linktoc=all]{hyperref}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{amsmath}
+
 
 \title{ARM-Thumb Machine Code Reference}
 \author{Michael Lyle}
-\date{October 2021}
+\date{2024 Edition}
 
 \ttfamily
 
 \usepackage[
   letterpaper,
   twoside,
-  bindingoffset=0.7cm,
-  inner=1.8cm,
-  outer=1.8cm,
+  bindingoffset=1.1cm,
+  inner=1.9cm,
+  outer=1.9cm,
   top=2cm,
   bottom=2cm,
   headsep=1.2cm
@@ -32,16 +36,19 @@
 \newcommand{\numtt}[1]{$\mathtt{#1}$}
 \newcommand{\reg}[1]{$r#1$}
 
-
+\setlength{\parskip}{6pt}%
 \setlength{\parindent}{0pt}
 
 \begin{document}
 
 \maketitle
+{
+\setlength{\parskip}{0pt}%
 \tableofcontents
-\vspace{5.5cm}
+}
+\vspace{3.2cm}
 \begin{center}
-\includegraphics[width=5.25in]{computer_problems.png}
+\includegraphics[width=5.2in]{computer_problems.png}
 
 \scriptsize{XKCD \#722, "Computer Problems" (by Randall Munroe)}
 \end{center}
@@ -50,16 +57,12 @@
 
 \section{Architecture Summary}
 
-In this course, we will be learning ARM Thumb machine language.  ARM is one of the most common instruction set architectures in the world.\vspace{0.5cm}
-
-It is used in almost all cellular phones, most tablets, and many laptop computers, in addition to a large share of the microcontrollers in cars and everyday items. \vspace{0.5cm}
-
-ARM Thumb is a portion of the instruction set consisting of $16$ bit long instructions.  Normal ARM instructions are $32$ bits long, but we will not use them in this class.\vspace{0.5cm}
+In this course, we will be learning ARM Thumb machine language.
 
 Specifically, we are writing code for the ARMv7 Thumb architecture.  Its characteristics are:
 
 \begin{itemize}
-    \item 32-bit (4 byte) register (word) size
+    \item \index{registers}32-bit (4 byte) register (word) size
     \item 32-bit (4 byte) address size
     \item 16-bit (2 byte) instruction length
     \item \index{address}Addresses point to individual bytes.  Instructions and words should be aligned in memory.
@@ -83,9 +86,157 @@ Specifically, we are writing code for the ARMv7 Thumb architecture.  Its charact
 \subsection{Machine Language vs. Assembly Language}
 
 In this course, we are writing programs in machine language.  This is a raw sequence of numbers that tells the computer what to do.
-\vspace{0.5cm}
 
-One step up from machine language is to use assembly language, where we write one line of code for each instruction, and the assembler translates this into machine language.  Assemblers make this process slightly easier by handling the details of instruction encoding and calculating addresses for the programmer.
+\index{assembly}
+One step up from machine language is to use assembly language, where each line of code corresponds to a single machine instruction, which the assembler then translates into the binary format of machine language.  Assemblers make the process of programming slightly easier by handling the details of instruction encoding and calculating addresses for the programmer.
+
+Most contemporary programmers work with high-level languages, such as \textit{C}, \textit{Java}, or \textit{Python}. These languages require conversion to machine code for execution. This is typically done through compilation, where the high-level code is translated into machine code, or through interpretation, where another program executes the high-level code step-by-step.
+
+\newpage
+
+\section{Using the ARM Microprocessor Trainer}
+
+You will be receiving an Microprocessor Trainer in this course. Before home computers were readily available, this was one way that many people learned to program. The Trainer has a keypad where you can inspect and manipulate the contents of memory, as well as run your program.
+
+Unlike earlier trainers, the system designed for this class uses a modern instruction set, \textbf{ARM-Thumb}, which is still actively used on microcontrollers. It is closely related to the \textbf{ARM} instruction set used in modern phones, tablets, and Apple computers.
+
+\begin{figure}[h]
+    \includegraphics[width=13cm]{mptrainer.pdf}    
+    \centering
+    \caption{ARM Microprocessor Trainer, Revision B}
+\end{figure}
+
+If you've programmed before, this will be more cumbersome than you're used to! It's important to pre-plan your programs and think about what each instruction will do.
+
+\subsection{Description of Keys}
+
+\begin{itemize}
+    \item \textbf{0-9, A-F}: Represent hexadecimal digits, which are used to enter numbers into the trainer.
+    \item \textbf{CLR}: Functions as a backspace key, allowing you to correct any mistakes made during input.
+    \item \textbf{ADDR}: Toggles the cursor between editing the memory address and the value at that address.
+    \item \textbf{LOAD}: Loads the value located at the specified address into the display. Pressing this key repeatedly will advance the address sequentially, allowing you to view subsequent values.
+    \item \textbf{STOR}: Saves the currently displayed value into the specified memory address, effectively writing data to memory. This will also advance the address.
+    \item \textbf{STEP}: Executes the instruction at the current memory address and then automatically advances to the next address, facilitating step-by-step execution of your code.
+    \item \textbf{RUN}: Starts a continuous execution of the program beginning at the current address. The execution will proceed without interruption until you press \textbf{STEP}.
+\end{itemize}
+
+\subsection{Screen Contents}
+\index{screen}
+
+The screen provides an overview of the current status of the microprocessor trainer.
+
+\begin{figure}[h]
+\begin{tikzpicture}
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+            \node[shape=circle,draw,inner sep=2pt] (char) {#1};}}
+    \node[anchor=south west,inner sep=0] (image) at (0,0) {\includegraphics[width=0.60\textwidth]{mptrainerscreen.png}};
+    \begin{scope}[
+        x={(image.south east)},
+        y={(image.north west)}
+    ]
+
+    \node[shape=circle,draw,fill=white,inner sep=2pt,line width=2pt] at (0.4,0.36) {\huge$1$};
+    \node[shape=circle,draw,fill=white,inner sep=2pt,line width=2pt] at (0.2,0.15) {\huge$2$};
+    \node[shape=circle,draw,fill=white,inner sep=2pt,line width=2pt] at (0.55,0.15) {\huge$3$};
+    \node[shape=circle,draw,fill=white,inner sep=2pt,line width=2pt] at (0.75,0.38) {\huge$4$};
+    \node[shape=circle,draw,fill=white,inner sep=2pt,line width=2pt] at (0.6,0.78) {\huge$5$};
+
+    \end{scope}
+\end{tikzpicture}
+\centering
+\caption{Screen Contents at Startup}
+\end{figure}
+
+Various types of information are displayed on the screen:
+
+\begin{enumerate}
+\item \index{registers}The values of registers are displayed centrally.
+\item The current address is displayed on the left.  A red arrow indicates we are currently editing the first digit of the address.
+\item The value (that may be loaded or stored) is displayed to the right of the address.
+\item The current flags (produced by the ALU and used by conditional branches) are displayed on the right side of the screen.
+\item At the top of the screen is where a program's input/output is displayed.
+\end{enumerate}
+
+\subsection{Entering Instructions}
+
+Once you have written your program and translated it into hexadecimal format, you will need to enter these instructions into the Microprocessor Trainer. Follow these steps to input each instruction:
+
+\begin{enumerate}
+    \item Turn on the Microprocessor Trainer and locate the keypad.
+    \item Begin by setting the starting address where your program will be stored. Enter \texttt{20000000} using the numeric keys (0-9, A-F).
+    \item Press the \textbf{ADDR} key to switch the focus from entering an address to entering a value.
+    \item Now, enter the first instruction from your program. Remember, each instruction should be a 4-digit hexadecimal number (consisting of the characters 0-9 and A-F).
+    \item After typing the hexadecimal instruction, press the \textbf{STOR} key. This will store your instruction at the current address. The Trainer will automatically advance to the next memory address.
+    \item Repeat steps 4 and 5 for each subsequent instruction in your program:
+        \begin{itemize}
+            \item Enter the next 4-digit hexadecimal instruction.
+\index{memory!store}
+            \item Press the \textbf{STOR} key to store the instruction and move to the next address.
+        \end{itemize}
+    \item Continue this process until you have entered all the instructions of your program.
+\end{enumerate}
+
+Make sure you enter each instruction correctly and in the proper order. If you make a mistake, you can always go back to any address by entering it and pressing \textbf{ADDR} to correct the value.
+
+\textbf{Tip:} Always double-check each instruction after entering it to make sure it has been input correctly before hitting \textbf{STOR}. This will save you time troubleshooting later!
+
+\paragraph{Predicting Outcomes Before Execution:}
+Before running your program, take a moment to predict the expected results and behavior of your code. For example, think about what values you expect to see in registers, and when. By anticipating the values in registers and the effects of each instruction, you can better identify when things might go wrong and understand why.
+
+\subsection{Running a Program}
+
+Once you have successfully entered all of your program's instructions into the Microprocessor Trainer, the next step is to run your program to see how it works.
+
+\paragraph{Setting the Starting Point:}
+\index{address}
+First, you need to set the Trainer to the beginning of your program. Ensure the address field is active by pressing \textbf{ADDR} if necessary. Using the keypad, enter the address \texttt{20000000}, which is where your program starts. Finally, press the \textbf{ADDR} key to confirm the start address.
+
+\paragraph{Choosing the Mode of Execution:}
+With the starting address set, you have two options for running your program:
+\begin{itemize}
+    \item \textbf{Step-by-Step Execution:} If you want to see how each instruction is executed one at a time, press the \textbf{STEP} key. This allows you to observe the changes and understand the flow of your program in detail. After pressing \textbf{STEP}, the Trainer executes the current instruction and then pauses, waiting for you to press \textbf{STEP} again for the next instruction.
+
+    \item \textbf{Continuous Execution:} If you prefer to run your program continuously from the start to the end, press the \textbf{RUN} key. The Trainer will execute all the instructions continuously until the end of the program is reached, or until you press the \textbf{STEP} key to halt execution.
+\end{itemize}
+
+\paragraph{Monitoring and Troubleshooting:}
+As your program runs, watch the display on the Trainer to see the outputs and any changes in the values stored in the memory. If the program does not behave as expected, you may need to stop the execution, review and correct the instructions you entered. Remember, debugging is a normal part of learning to program.
+\paragraph{Tip:} Start with the step-by-step execution mode when you’re testing a new program. It gives you a better understanding of how each part of your program works and helps in identifying and fixing any errors.
+
+\subsection{Inspecting Memory}
+
+After you run your program, or even while it is running, you might want to check what is happening inside the memory of the Microprocessor Trainer. This process is called "inspecting memory," and it lets you see the values stored in different memory locations. Here’s how you can do it:
+
+\paragraph{Access the Memory:}
+To look at the contents of a specific memory address, you need to first stop your program if it is running. You can do this by pressing the \textbf{STEP} key to pause execution.
+
+\paragraph{Choosing the Address:}
+Use the \textbf{ADDR} key to select the address field. Enter the desired memory address using the numeric keys (0-9, A-F). Remember that your program starts at \texttt{20000000}, so any addresses from this point onward may contain data or instructions from your program.
+
+\paragraph{Loading the Value from Memory:}
+\index{memory!load}
+Once you have entered the desired address, press the \textbf{LOAD} key. This will load the value at the address you entered, and switch the cursor to the value field.
+
+\subsection{Function Keys}
+
+The \textbf{LOAD} key on the Microprocessor Trainer is not just for loading the value at the current address. When held down and used in combination with other keys, it activates a variety of special functions. Here's how you can use these combinations effectively:
+
+\begin{itemize}
+    \item \textbf{Keys 0 - 2}: \index{registers}Display different sets of registers on the screen. Pressing \textbf{LOAD} + \textbf{0} will show registers \texttt{r0} to \texttt{r3}, which is the default display.
+    \item \textbf{Keys 4 - 6}: \index{saving}Save the currently entered program into internal flash memory. Each key represents a different storage slot, allowing for multiple programs to be stored simultaneously.
+    \item \textbf{Keys 8 - A}:  \index{loading} Load previously saved programs from the corresponding slots in the internal flash memory. This is useful for retrieving and running stored code without re-entering it.
+    \item \textbf{Key D}: \index{decimal} Toggle the display mode of the registers between hexadecimal and decimal. This can be helpful for easier reading or specific debugging needs.
+    \item \textbf{Key F}: Activate a fast run mode, which executes the program without updating the display between each instruction. This mode allows for quicker execution but is generally not recommended for debugging, as changes in registers and memory are not visible in real time.
+\end{itemize}
+
+\subsection{The Easter Egg}
+\index{snake}In your explorations with the Microprocessor Trainer, there's a special feature hidden for you to discover. This hidden feature, often called an "Easter egg," can be activated under specific conditions.
+
+\paragraph{Hint:}
+If you manage to load the ASCII values for the characters 'S', 'N', 'A', and 'K' into registers \texttt{r0} through \texttt{r3} respectively, and then execute a Supervisor Call (SVC) instruction code $\texttt{45}_{16}$ (which stands for 'E' in ASCII), something unexpected will happen!
+
+\paragraph{Discover on Your Own:}
+You might want to figure out how to achieve this setup and see what happens for yourself. It’s a fun way to apply what you’ve learned about ASCII values, registers, and supervisor calls.
 
 \newpage
 
@@ -93,14 +244,13 @@ One step up from machine language is to use assembly language, where we write on
 
 The following are just a few of the many instructions in the ARM-Thumb instruction set.  There are enough instructions in this manual to be able to write any program.  In other words, this set of instructions are Turing-complete.  But other instructions, not listed here, are often necessary to write the shortest and fastest possible program.
 
-\instruction{ADD (add immediate)}{Add an 8 bit value (included in the instruction) to a register.  Flags are updated based on the result value.}{0011 0ddd iiii iiii}{$r[d] = r[d] + i$}{add}
-\index{immediate instructions}
+\instruction{ADD (add immediate)}{Add an 8 bit value (included in the instruction) to a register.  Flags are updated based on the result value.}{0011 0ddd iiii iiii}{$r[d] = r[d] + i$}{add}\index{immediate instructions}
 \begin{tabular}{p{0.15\textwidth} p{0.10\textwidth} p{0.63\textwidth}}
 \texttt{ddd} & (3 bits) & This is the register number of the operand to add to, \underline{and} the destination register where the result should be placed. \\
 \texttt{iiii iiii} & (8 bits) & This is the value that should be added, included as an immediate operand in the instruction. \\
 \end {tabular}
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 
 Examples:
@@ -126,7 +276,7 @@ Examples:
 \texttt{ddd} & (3 bits) & This is the register number to store the result in. \\
 \end {tabular}
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 
 Examples:
@@ -149,7 +299,7 @@ Examples:
 \texttt{iiiiiiii...} & (11 bits) & Number of instructions to jump forward (or backwards, if negative...)\\
 \end {tabular}
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 
 Examples:
@@ -187,7 +337,7 @@ Examples:
 \texttt{nnn} & (3 bits) & This is the register number of the operand to subtract from. \\
 \texttt{mmm} & (3 bits) & This is the register number of the subtrahend \\
 \end{tabular}
-\vspace{1cm}
+\vspace{0.5cm}
 
 Examples:
 
@@ -201,15 +351,14 @@ Examples:
 \end{tabular}
 
 \newpage
-\instruction{MOV (move immediate)}{Moves a value, provided in the instruction, into a chosen register.}{0010 0ddd iiii iiii}{$r[d] = i$}{move}
-\index{immediate instructions}
+\instruction{MOV (move immediate)}{Moves a value, provided in the instruction, into a chosen register.}{0010 0ddd iiii iiii}{$r[d] = i$}{move}\index{immediate instructions}
 
 \begin{tabular}{p{0.15\textwidth} p{0.10\textwidth} p{0.63\textwidth}}
 \texttt{ddd} & (3 bits) & This is the register number where the result should be placed. \\
 \texttt{iiii iiii} & (8 bits) & This is the value that should be placed into the destination register.  The high 24 bits of the register will be $0$ and the remaining 8 bits will be the immediate value. \\
 \end {tabular}
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 
 Examples:
@@ -232,7 +381,7 @@ Examples:
 \texttt{mmm} & (3 bits) & This is the register number from which the value should be copied. \\
 \texttt{ddd} & (3 bits) & This is the register number where the value should be placed.
 \end{tabular}
-\vspace{1cm}
+\vspace{0.5cm}
 
 Examples:
 
@@ -254,7 +403,7 @@ Examples:
 \texttt{nnn} & (3 bits) & This is the register number that contains the first number to be multiplied. \\
 \texttt{ddd} & (3 bits) & This is the register number with the second multiplicand, and where the value should be placed.
 \end{tabular}
-\vspace{1cm}
+\vspace{0.5cm}
 
 Examples:
 
@@ -272,15 +421,14 @@ Examples:
 \hline
 \end{tabular}
 
-\instruction{SUB (subtract immediate)}{Subtract an 8 bit value (included in the instruction) from a register.  Flags are updated based on the result value.}{0011 1ddd iiii iiii}{$r[d] = r[d] - i$}{subtract}
-\index{immediate instructions}
+\instruction{SUB (subtract immediate)}{Subtract an 8 bit value (included in the instruction) from a register.  Flags are updated based on the result value.}{0011 1ddd iiii iiii}{$r[d] = r[d] - i$}{subtract}\index{immediate instructions}
 
 \begin{tabular}{p{0.15\textwidth} p{0.10\textwidth} p{0.63\textwidth}}
 \texttt{ddd} & (3 bits) & This is the register number of the operand to subtract from, \underline{and} the destination register where the result should be placed. \\
 \texttt{iiii iiii} & (8 bits) & This is the value that should be subtracted, included as an immediate operand in the instruction. \\
 \end {tabular}
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 
 Examples:
@@ -306,7 +454,7 @@ Examples:
 \texttt{ddd} & (3 bits) & This is the register number to store the result in. \\
 \end {tabular}
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 
 Examples:
@@ -332,7 +480,7 @@ Examples:
 \texttt{iiiiiiii} & (8 bits) & Number of instructions to jump forward (or backwards, if negative...)\\
 \end {tabular}
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 
 Examples:
@@ -350,9 +498,9 @@ Examples:
 \hline
 \texttt{1101 0000 1111 1101}&D0FD&IF $Z$: Goes back to 1 instructions before this one.\\
 \hline
-\texttt{1101 0000 1111 1110}&D0FE&IF $Z$: Goes to \textbf{THIS} instruction (infinite loop)\\
+\texttt{1101 0000 1111 1110}&D0FE&IF $Z$: Goes to \textbf{THIS} instruction (infinite loop if taken)\\
 \hline
-\texttt{1101 0000 1111 1111}&D0FF&IF $Z$: Goes to the instruction after this one (does nothing)\\
+\texttt{1101 0000 1111 1111}&D0FF&IF $Z$: Goes to the instruction after this one (does nothing, either way)\\
 \hline
 \texttt{1101 0000 0000 0000}&D000&IF $Z$: Skips 1 instruction after this one\\
 \hline
@@ -371,7 +519,7 @@ Examples:
 \texttt{iiiiiiii} & (8 bits) & Number of instructions to jump forward (or backwards, if negative...)\\
 \end {tabular}
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 
 Examples:
@@ -385,7 +533,7 @@ Examples:
 \hline
 \texttt{1101 0001 1111 1101}&D1FD&IF NOT $Z$: Goes back to 1 instructions before this one.\\
 \hline
-\texttt{1101 0001 1111 1111}&D1FF&IF NOT $Z$: Goes to the instruction after this one (does nothing)\\
+\texttt{1101 0001 1111 1111}&D1FF&IF NOT $Z$: Goes to the instruction after this one (does nothing, either way)\\
 \hline
 \texttt{1101 0001 0000 0000}&D100&IF NOT $Z$: Skips 1 instruction after this one\\
 \hline
@@ -393,13 +541,14 @@ Examples:
 \hline
 \end{tabular}
 
+\newpage
 \instruction{BMI (branch if negative)}{Branches the program counter to a new location, IF the if the result of the previous ALU operation was less than zero, or after using the CMP instruction where the comparand is larger than the other value.}{1101 0100 iiii iiii}{IF $N$: $pc = pc + 2*(i+2)$}{branch!conditional}
 
 \begin{tabular}{p{0.15\textwidth} p{0.10\textwidth} p{0.63\textwidth}}
 \texttt{iiiiiiii} & (8 bits) & Number of instructions to jump forward (or backwards, if negative...)\\
 \end {tabular}
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 
 Examples:
@@ -417,7 +566,9 @@ Examples:
 \hline
 \end{tabular}
 
-\newpage
+\vspace{3cm}
+
+There are more conditional branches.  You can find information on how they are encoded in sections \ref{encodings} and \ref{condcodes}.
 
 \newpage
 \section{ARM-Thumb Miscellaneous Instructions}
@@ -429,7 +580,7 @@ Examples:
 \texttt{mmm} & (3 bits) & This is the register number that contains the number to be shifted. \\
 \texttt{ddd} & (3 bits) & This is the register number to store the result in.
 \end{tabular}
-\vspace{1cm}
+\vspace{0.5cm}
 
 Examples:
 
@@ -449,7 +600,7 @@ Examples:
 \texttt{mmm} & (3 bits) & This is the register number that contains the first operand for logical-or. \\
 \texttt{ddd} & (3 bits) & This is the register number that contains the second operand for logical-or, and the destination register to store the result within. \\
 \end{tabular}
-\vspace{1cm}
+\vspace{0.5cm}
 
 Examples:
 
@@ -470,7 +621,7 @@ Examples:
 \texttt{mmm} & (3 bits) & This is the register number that contains the first operand for logical-and. \\
 \texttt{ddd} & (3 bits) & This is the register number that contains the second operand for logical-and, and the destination register to put the result within. \\
 \end{tabular}
-\vspace{1cm}
+\vspace{0.5cm}
 
 Examples:
 
@@ -491,7 +642,7 @@ Examples:
 \texttt{nnn} & (3 bits) & This is the second register that is combined to form the memory address. \\
 \texttt{ttt} & (3 bits) & This is the target, where the word retrieved from memory is placed. \\
 \end{tabular}
-\vspace{1cm}
+\vspace{0.5cm}
 
 Examples:
 
@@ -512,7 +663,7 @@ Examples:
 \texttt{nnn} & (3 bits) & This is the second register that is combined to form the memory address. \\
 \texttt{ttt} & (3 bits) & The contents of this register are stored to the chosen location in memory. \\
 \end{tabular}
-\vspace{1cm}
+\vspace{0.5cm}
 
 Examples:
 
@@ -528,20 +679,19 @@ Examples:
 \subsection{Logical Shifting (Illustrated)}
 
 \begin{center}
-\includegraphics[width=4.25in]{leftshift.eps}
+\includegraphics[width=3.7in]{leftshift.eps}
 \end{center}
 
 \subsection{Putting a Large Value in a Register}
 
 \index{address}
-\index{load}
+\index{memory!load}
 \index{logical!shift}
 \index{logical!or}
 \index{move}
 Often, it will be desirable to put a number larger than we can have in a single immediate into a register.  The immediate move instruction available to us only can place an $8$ bit value in a register, but registers are $32$ bits wide.
 
 There are many ways to accomplish this, including using load instructions.  However, it can be complicated to calculate addresses.  Below is a simple method to place the value $12345678_{16}$ into \reg{0}, while using \reg{1} as a temporary space.
-\vspace{0.3cm}
 
 \renewcommand{\arraystretch}{1.5}
 \begin{tabular}{p{0.1\textwidth} p{0.2\textwidth} p{0.6\textwidth}}
@@ -556,7 +706,7 @@ Shifts \reg{0} left 8 bits; it now contains $1200_{16}$.\\
 Puts $34_{16}$ into \reg{1}.\\
 
 \texttt{4309} & \texttt{ORR \reg{0}, \reg{1}}&
-Ors \reg{0} and \reg{1}, putting the result in \reg{0}, which now contains $1234_{16}$.\\
+Logical OR of \reg{0} and \reg{1}, putting the result in \reg{0}, which now contains $1234_{16}$.\\
 
 \texttt{0200} & \texttt{LSL \reg{0}, \reg{0}, \#8 }&
 Shifts \reg{0} left 8 bits; it now contains $123400_{16}$.\\
@@ -565,7 +715,7 @@ Shifts \reg{0} left 8 bits; it now contains $123400_{16}$.\\
 Puts $56_{16}$ into \reg{1}.\\
 
 \texttt{4309} & \texttt{ORR \reg{0}, \reg{1}}&
-Ors \reg{0} and \reg{1}, putting the result in \reg{0}, which now contains $123456_{16}$.\\
+Logical OR of \reg{0} and \reg{1}, putting the result in \reg{0}, which now contains $123456_{16}$.\\
 
 \texttt{0200} & \texttt{LSL \reg{0}, \reg{0}, \#8}&
 Shifts register 0 left 8 bits; it now contains $12345600_{16}$.\\
@@ -574,7 +724,7 @@ Shifts register 0 left 8 bits; it now contains $12345600_{16}$.\\
 Puts $78_{16}$ into \reg{1}.\\
 
 \texttt{4309} & \texttt{ORR \reg{0}, \reg{1}}&
-Ors \reg{0} and \reg{1}, putting the result in \reg{0}, which now contains $12345678_{16}$!\\
+Logical OR of \reg{0} and \reg{1}, putting the result in \reg{0}, which now contains $12345678_{16}$!\\
 \end{tabular}
 \renewcommand{\arraystretch}{1}
 
@@ -588,8 +738,8 @@ In this way, we can put large numbers into any of our registers.  This approach 
 \newpage
 \section{Special (SuperVisor Call) Instructions}
 
-\index{supervisor call}
-These are special instructions that I have set up to be available on the computing environment you will use.  They provide input and output (I/O) functionality and other convenient features.
+\index{supervisor call (SVC)}
+Supervisor Call (SVC) instructions are special system-level operations that provide input/output (I/O) functionality and other system utilities. These instructions have been specifically configured for the computing environment used in this course.
 
 Many of these expect for an appropriate value to be loaded to $r0$ (or other registers) before executing them.
 
@@ -617,12 +767,13 @@ Many of these expect for an appropriate value to be loaded to $r0$ (or other reg
 \texttt{1101 1111 0000 0011}&DF03&Basic instruction encoding\\
 \end{tabular}
 
+\newpage
+
 \instruction{SVC11 (sleep, tenths)}{This freezes the program for a short amount of time.  The length of time, in tenths of a second, is specified in $r0$.  For instance, if $r0$ is $15$, this will wait $1.5$ seconds before the program resumes running.}{1101 1111 0001 0001}{}{delay}
 
 \begin{tabular}{p{0.33\textwidth} p{0.09\textwidth} p{0.44\textwidth}}
 \texttt{1101 1111 0001 0001}&DF11&Basic instruction encoding\\
 \end{tabular}
-\newpage
 
 \instruction{SVC12 (sleep, seconds)}{This freezes the program for a short amount of time.  The length of time, in seconds, is specified in $r0$.  For instance, if $r0$ is $15$, this will wait $15$ seconds before the program resumes running.}{1101 1111 0001 0010}{}{delay}
 
@@ -641,6 +792,8 @@ Many of these expect for an appropriate value to be loaded to $r0$ (or other reg
 \begin{tabular}{p{0.33\textwidth} p{0.09\textwidth} p{0.44\textwidth}}
 \texttt{1101 1111 0010 0001}&DF21&Basic instruction encoding\\
 \end{tabular}
+
+\newpage
 
 \instruction{SVC22 (output number, hex)}{This prints the number in $r0$ on the screen, as a base 16 (hexadecimal) number.  For instance, if $r0$ is $F_{16}$ (or $15_{10}$), this will write $F$ on the screen.}{1101 1111 0010 0010}{}{screen}
 
@@ -674,56 +827,78 @@ Many of these expect for an appropriate value to be loaded to $r0$ (or other reg
 \index{colors}
 \subsection{Screen Colors (8-bit)}
 
-\textbf{SVC25} and \textbf{SVC24} take in \reg{0} an 8-bit color value.  This is formatted as \texttt{RRGG GBBB},where \texttt{RR} is a two-bit value indicating the intensity of the color red, \texttt{GGG} is a three-bit value indicating the intensity of green, and \texttt{BBB} is a three-bit value indicating the intensity of the color blue.
+\textbf{SVC25} and \textbf{SVC24} take in \reg{0} an 8-bit color value.  This color value is formatted in the bit pattern \texttt{RRGG GBBB}, where \texttt{RR} is a two-bit value indicating the intensity of the color red, \texttt{GGG} is a three-bit value indicating the intensity of green, and \texttt{BBB} is a three-bit value indicating the intensity of the color blue.
 
-For instance, if it's desired to draw an icon with the color purple, that requires bright red and bright blue, with no green.  Therefore, we will use the color \texttt{1100 0111} for full intensity red, no green, and full intensity blue.  This becomes the value $C7_{16}$ which can be placed into R0 with the instruction \texttt{MOV R0, F8} encoded as \texttt{20C7}.
+For instance, if it's desired to draw an icon with the color purple, that requires bright red and bright blue, with no green.  Therefore, we will use the color \texttt{1100 0111} for full intensity red, no green, and full intensity blue.  This becomes the value $C7_{16}$ which can be placed into \reg{0} with the instruction \texttt{MOV R0, C7} encoded as \texttt{20C7}.
 
 \subsection{Screen Coordinates}
 
-Screen drawing routines also take in coordinates in (\reg{1}, \reg{2}).  Unlike graphing coordinates, as $y$ gets bigger this moves down the screen.  The upper left corner of the screen is at ($0$, $0$).  The upper right of the screen is at ($160$, $0$).  The bottommost row you should draw on is row $53$, which means the other two corners are at ($0$, $53$) and ($160$, $53$).
+Screen drawing routines also take in coordinates in (\reg{1}, \reg{2}).  Unlike graphing coordinates, as $y$ gets bigger this moves down the screen.  The upper left corner of the screen is at ($0$, $0$).  The upper right of the screen is at ($160$, $0$).  The lowest row that you should use on the screen is row $53$. Therefore, the bottom left and right corners of the screen are positioned at ($0$, $53$) and ($160$, $53$), respectively.
 
 \section{Miscellaneous Reference}
 \subsection{ASCII Character Map}
 \index{ASCII}
 \begin{center}
 \input{ascii.tex}
-(modified by Michael Lyle, 2021)
+\small{(modified by Michael Lyle, 2021)}
 \end{center}
 
 \newpage
 \subsection{ARM Thumb Instruction Encoding}
 \index{instruction encodings}
+\label{encodings}
 \vspace{0.5cm}
 \includegraphics[width=\textwidth]{insencoding.eps}
 Source: DDI0210, Arm Limited, 2004
 
 \newpage
+\subsubsection{CondCodes and Suffixes for Conditional Branches}
+\label{condcodes}
+\index{condition codes}
+\includegraphics[width=\textwidth]{condcodesummary.eps}
+Source: DDI0084D, Arm Limited, 1998
+
+\newpage
 \subsection{Hexadecimal and Decimal Conversion (Nybbles)}
 \index{nybble}
-\begin{tabular}{p{0.16\textwidth} p{0.16\textwidth} p{0.16\textwidth}}
+\begin{table}[h]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\begin{tabular}{ccc}
 \index{decimal}Decimal & \index{binary}Binary & \index{hexadecimal}Hexadecimal\\
 \hline
-$0$ & \numtt{0000} & $0$\\
-$1$ & \numtt{0001} & $1$\\
-$2$ & \numtt{0010} & $2$\\
-$3$ & \numtt{0011} & $3$\\
-$4$ & \numtt{0100} & $4$\\
-$5$ & \numtt{0101} & $5$\\
-$6$ & \numtt{0110} & $6$\\
-$7$ & \numtt{0111} & $7$\\
-$8$ & \numtt{1000} & $8$\\
-$9$ & \numtt{1001} & $9$\\
-$10$ & \numtt{1010} & $A$\\
-$11$ & \numtt{1011} & $B$\\
-$12$ & \numtt{1100} & $C$\\
-$13$ & \numtt{1101} & $D$\\
-$14$ & \numtt{1110} & $E$\\
-$15$ & \numtt{1111} & $F$\\
+$0$ & \texttt{0000} & $0$\\
+$1$ & \texttt{0001} & $1$\\
+$2$ & \texttt{0010} & $2$\\
+$3$ & \texttt{0011} & $3$\\
+$4$ & \texttt{0100} & $4$\\
+$5$ & \texttt{0101} & $5$\\
+$6$ & \texttt{0110} & $6$\\
+$7$ & \texttt{0111} & $7$\\
 \end{tabular}
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\begin{tabular}{ccc}
+\index{decimal}Decimal & \index{binary}Binary & \index{hexadecimal}Hexadecimal\\
+\hline
+$8$ & \texttt{1000} & $8$\\
+$9$ & \texttt{1001} & $9$\\
+$10$ & \texttt{1010} & $A$\\
+$11$ & \texttt{1011} & $B$\\
+$12$ & \texttt{1100} & $C$\\
+$13$ & \texttt{1101} & $D$\\
+$14$ & \texttt{1110} & $E$\\
+$15$ & \texttt{1111} & $F$\\
+\end{tabular}
+\end{minipage}
+\end{table}
 
 \index{branch!offsets}
 \subsection{Branch Offsets (as used in B, BNZ, etc.)}
-\begin{tabular}{p{0.25\textwidth} p{0.12\textwidth} p{0.23\textwidth} p{0.23\textwidth}}
+\begin{tabular}{p{0.30\textwidth} p{0.12\textwidth} p{0.23\textwidth} p{0.18\textwidth}}
 Number of Instructions & Address Offset & 8 Bit Conditional Branch Offset & 11 Bit Branch Offset\\
 \hline
 Back 30 & $-3C_{16}$ & $E0_{16}$ & $7E0_{16}$ \\
@@ -748,6 +923,14 @@ Forward 17 (Skip 16) & $+22_{16}$ & $10_{16}$ & $010_{16}$ \\
 Forward 18 (Skip 17) & $+24_{16}$ & $11_{16}$ & $011_{16}$
 \end{tabular}
 
+\paragraph{General Equation for Branch Calculation:}
+\( \text{Offset} = \frac{\text{Target} - \text{CurAddr}}{2} + 2 \)
+
+\paragraph{Backwards Unconditional Branches:}
+\( \text{Offset} = 800_{16} + \frac{\text{Target} - \text{CurAddr}}{2} - 2 \)
+
+\paragraph{Backwards 8-bit Conditional Branches:}
+\( \text{Offset} = 100_{16} + \frac{\text{Target} - \text{CurAddr}}{2} - 2 \)
 
 \newpage
 \addcontentsline{toc}{subsection}{ARM Thumb-16 Quick Reference Card}
@@ -755,18 +938,38 @@ Forward 18 (Skip 17) & $+24_{16}$ & $11_{16}$ & $011_{16}$
 \index{move}
 \index{subtract}
 \includepdf[angle=90,pages=1,pagecommand={},width=7.65in, offset=0.25in 0]{ThumbRefCard.pdf}
-\index{load}
+\index{memory!load}
 \index{address}
-\index{store}
+\index{memory!store}
 \index{branch}
 \index{logical!and}
 \index{logical!or}
 \index{logical!shift}
 \includepdf[angle=90,pages=2,pagecommand={},width=7.65in, offset=0.25in 0]{ThumbRefCard.pdf}
-\index{supervisor call}
+\index{supervisor call (SVC)}
 \includepdf[angle=90,pages=3,pagecommand={},width=7.65in, offset=0.25in 0]{ThumbRefCard.pdf}
 
+\addcontentsline{toc}{subsection}{CO\&D Program Form}
+\includepdf[pages=1]{Program_Form.pdf}
+\includepdf[pages=2]{Program_Form.pdf}
+\addcontentsline{toc}{subsection}{CO\&D Execution Trace}
+\includepdf[pages=3]{Program_Form.pdf}
 
 \printindex
+
+\vspace{0.5cm}
+ARM-Thumb Machine Code Reference by Michael Lyle is licensed under Creative Commons Attribution 4.0 International. To view a copy of this license, visit \\
+https://creativecommons.org/licenses/by/4.0/
+
+\vspace{0.5cm}
+The Thumb Quick Reference Card, and the instruction encoding information from DDI0210 and DDI0084D, copyright ARM Holdings.  The ASCII reference sheet is by Victor Eijkhout. The XKCD comic is by Randall Munroe.  The below comic, Captain Zilog, is from Zilog Corporation.  All rights for these documents remain with their respective authors.
+
+\vspace{0.1cm}
+
+\begin{figure}[h]
+    \includegraphics[width=10.5cm]{zilog.png}    
+    \centering
+    \caption{From \textit{Captain Zilog}, 1979, Zilog, Inc.}
+\end{figure}
 
 \end{document}
