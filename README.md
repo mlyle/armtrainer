@@ -29,7 +29,7 @@ By a student, Robin K:
 
 ## TODO
 
-* Relative branches were difficult for students to compute.  Finding a better way to explain this, in both lessons and manuals, would be helpful.
-* The manual should be updated with some of the system calls that have not been documented and perhaps
-* Manual should be updated to include details of usage of the ARM trainer.
+* Relative branches were difficult for students to compute.  Finding a better way to explain this, in both lessons and manuals, would be helpful.  There was a slight improvement this year but it's hard.
+  * It doesn't help that I don't teach the students two's complement for signed notation, but there's already *so much* in the course for 10 weeks.
+* The manual should be updated with some of the system calls that have not been documented
 * Overall curriculum, etc, should get posted here.
