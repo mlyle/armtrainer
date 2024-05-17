@@ -36,8 +36,12 @@ By a student, Robin K:
 * The screen needs to clearly show that code is running.
 * Input calls do not allow the user to enter the number "0".
 * Add a help key showing key shortcuts?
+* No ability to access "current time"
+* No ability to do interactive/game input
+* "SAVE Failed" occurred, presumably after memory fault
 * The manual should be updated with some of the system calls that have not been documented
   * In particular, the input calls.
+  * Confirm backwards unconditional formula is correct
   * There may be a typo in the subtract register instruction.
 * The display icon and screen coordinate system could be more clearly explained
 * Overall curriculum, etc, should get posted here.
