@@ -739,6 +739,10 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 				frame->r[0] = random_next();
 			}
 			break;
+		case 0x19:		/* Undocumented for students: get current time since startup in ms.  wraps in 24/48 days */
+			frame->r[0] = systick_cnt * 1000 / SYSTICK_HZ;
+			break;
+
 		case 0x1a:		/* Undocumented for students: get the last key pressed during run */
 			frame->r[0] = running_key;
 			running_key = 0;
