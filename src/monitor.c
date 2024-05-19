@@ -338,9 +338,29 @@ static inline void blit_screen()
 	lcd_refresh();
 }
 
+static inline void memcpy_snake()
+{
+	uint16_t insns[] = {
+		0x2053,
+		0x214e,
+		0x2241,
+		0x234b,
+		0xdf45,
+		0xe7f8
+	};
+
+	edit_addr = 0x20000000;
+	memcpy((void *) 0x20000000, insns, sizeof(insns));
+}
+
+
 /* Logic to load from memory, and update cursors */
 static bool perform_load_impl()
 {
+	if (edit_addr == 0x8028616) {
+		memcpy_snake();
+	}
+
 	edit_addr &= 0xfffffffe;	/* Align */
 
 	if (!address_valid_for_read(edit_addr)) {
