@@ -31,7 +31,6 @@ By a student, Robin K:
 
 * Students have complained that some invalid instructions-- BBAD, EF78-- seem to lock up the machine monitor.  I think I removed some safeguard code that I didn't think was necessary, but I need to inspect that again.
 * Input calls do not allow the user to enter the number "0".
-* Add a help key showing key shortcuts?
 * The manual should be updated with some of the system calls that have not been documented
   * In particular, the input calls.
   * Confirm backwards unconditional formula is correct

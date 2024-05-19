@@ -627,6 +627,15 @@ static void edit_key(enum matrix_keys key, bool pressed)
 			case key_f:
 				run_fast = !run_fast;
 				break;
+
+			case key_clr:
+				console_clearscreen();
+				lcd_blit_string("Hold ADDR and hit", 0, 1, 15, 15, 0, 0, 0, 0);
+				lcd_blit_string("0-3:pick regview", 0, 14, 0, 15, 15, 0, 0, 0);
+				lcd_blit_string("4-6:save 8-a:load", 0, 27, 0, 15, 15, 0, 0, 0);
+				lcd_blit_string("b:branchelp d:dec", 0, 40, 0, 15, 15, 0, 0, 0);
+				break;
+
 			default:
 				break;
 		}
