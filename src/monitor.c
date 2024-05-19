@@ -506,6 +506,11 @@ static void perform_store()
 
 static void branch_calculator()
 {
+	if (!perform_load_impl()) {
+		console_str("\r\nInvalid addr\r\n");
+		return;
+	}
+
 	console_str("\r\n\r\nBranch Calculator\r\nTarget: ");
 
 	uint32_t target = console_read_number(16);
@@ -515,9 +520,11 @@ static void branch_calculator()
 		return;
 	}
 
-	uint32_t offset = edit_addr - target;
+	uint32_t offset = target - edit_addr;
 
 	offset /= 2;
+
+	offset += 2;
 
 	if (offset & 0x80000000) {
 		if (offset < 0xffffff00) {
@@ -534,7 +541,9 @@ static void branch_calculator()
 
 	console_number_16(offset & 0xff);
 
-	console_str("\r\n");
+	console_str("\r\nhit store or edit\r\n");
+
+	edit_val = 0xe000 | (offset & 0x7ff);
 }
 
 static void do_save(int slot)
@@ -653,7 +662,7 @@ static void edit_key(enum matrix_keys key, bool pressed)
 				lcd_blit_string("Hold ADDR and hit", 0, 1, 15, 15, 0, 0, 0, 0);
 				lcd_blit_string("0-3:pick regview", 0, 14, 0, 15, 15, 0, 0, 0);
 				lcd_blit_string("4-6:save 8-a:load", 0, 27, 0, 15, 15, 0, 0, 0);
-				lcd_blit_string("b:branchelp d:dec", 0, 40, 0, 15, 15, 0, 0, 0);
+				lcd_blit_string("b:b-helper d:dec", 0, 40, 0, 15, 15, 0, 0, 0);
 				break;
 
 			default:
