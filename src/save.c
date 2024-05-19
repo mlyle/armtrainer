@@ -21,6 +21,17 @@ bool save_writesave(int slot)
 	if (slot < 0) return false;
 	if (slot > NELEMENTS(saveslots)) return false;
 
+	/* Clear error flags that could have resulted from inadvertent
+	 * student write accesses to flash memory
+	 */
+	FLASH_ClearFlag(FLASH_FLAG_PGSERR);
+	FLASH_ClearFlag(FLASH_FLAG_PGPERR);
+	FLASH_ClearFlag(FLASH_FLAG_PGAERR);
+	FLASH_ClearFlag(FLASH_FLAG_WRPERR);
+	FLASH_ClearFlag(FLASH_FLAG_OPERR);
+	FLASH_ClearFlag(FLASH_FLAG_EOP);
+
+	/* Unlock flash, in preparation for saving */
 	FLASH_Unlock();
 
 	if (FLASH_EraseSector(saveslots[slot].sector_num, VoltageRange_3)
