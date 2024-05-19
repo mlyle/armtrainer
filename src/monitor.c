@@ -80,6 +80,11 @@ static bool show_decimal = false;
  */
 static bool run_fast = false;
 
+/* Stores any key (other than step/run) hit while a program is running.
+ * SVC1A can be used to retrieve this key
+ */
+static enum matrix_keys running_key;
+
 /* Special variable to detect that we have been through a reset and we
  * are requested to go to loader.   Explained in comment above
  * check_for_loader()
@@ -663,6 +668,10 @@ static void monitor_key_changed(enum matrix_keys key, bool pressed)
 		default:
 			if (prog_state == STATE_STOPPED) {
 				edit_key(key, pressed);
+			} else {
+				if (pressed) {
+					running_key = key;
+				}
 			}
 			break;
 	};
@@ -722,6 +731,10 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			} else {
 				frame->r[0] = random_next();
 			}
+			break;
+		case 0x1a:		/* Undocumented for students: get the last key pressed during run */
+			frame->r[0] = running_key;
+			running_key = 0;
 			break;
 
 		case 0x20:		/* clear top half of screen, position cursor at 0 */

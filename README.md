@@ -37,7 +37,6 @@ By a student, Robin K:
 * Input calls do not allow the user to enter the number "0".
 * Add a help key showing key shortcuts?
 * No ability to access "current time"
-* No ability to do interactive/game input
 * "SAVE Failed" occurred, presumably after memory fault
 * The manual should be updated with some of the system calls that have not been documented
   * In particular, the input calls.
