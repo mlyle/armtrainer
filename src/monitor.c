@@ -853,8 +853,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 
 		case 0x42:		/* Undocumented for students: disable debug monitor entirely */
 			singlestep_disable();
-
-
+			break;
 
 		case 0x45:		/* 'E', hidden secret snake syscall... */
 			/* 2053 214e 2241 234b df45 e7f8 */
