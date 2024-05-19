@@ -484,6 +484,39 @@ static void perform_store()
 	perform_load(false);
 }
 
+static void branch_calculator()
+{
+	console_str("\r\n\r\nBranch Calculator\r\nTarget: ");
+
+	uint32_t target = console_read_number(16);
+
+	if (target & 1) {
+		console_str("\r\nShould be even\r\n");
+		return;
+	}
+
+	uint32_t offset = edit_addr - target;
+
+	offset /= 2;
+
+	if (offset & 0x80000000) {
+		if (offset < 0xffffff00) {
+			console_str("\r\nToo far\r\n");
+			return;
+		}
+	}
+
+	console_str("\r\n");
+
+	console_number_16(offset & 0x7ff);
+
+	console_str(" cond: ");
+
+	console_number_16(offset & 0xff);
+
+	console_str("\r\n");
+}
+
 static void do_save(int slot)
 {
 	console_str("\r\nSave #");
@@ -582,6 +615,10 @@ static void edit_key(enum matrix_keys key, bool pressed)
 
 			case key_a:
 				do_load(2);
+				break;
+
+			case key_b:
+				branch_calculator();
 				break;
 
 			case key_d:

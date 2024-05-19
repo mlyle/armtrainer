@@ -30,9 +30,6 @@ By a student, Robin K:
 ## TODO
 
 * Students have complained that some invalid instructions-- BBAD, EF78-- seem to lock up the machine monitor.  I think I removed some safeguard code that I didn't think was necessary, but I need to inspect that again.
-* Relative branches were difficult for students to compute.  Finding a better way to explain this, in both lessons and manuals, would be helpful.  There was a slight improvement this year but it's hard.
-  * It doesn't help that I don't teach the students two's complement for signed notation, but there's already *so much* in the course for 10 weeks.
-  * Maybe I can add a branch calculator function to the monitor.
 * Input calls do not allow the user to enter the number "0".
 * Add a help key showing key shortcuts?
 * The manual should be updated with some of the system calls that have not been documented
