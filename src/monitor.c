@@ -207,12 +207,18 @@ static inline void blit_insns()
 	}
 }
 
+static inline void blit_cursor_lines(int y, uint8_t r, uint8_t g,
+		uint8_t b)
+{
+	lcd_blit_horiz(0, y, 159, r, g, b);
+	lcd_blit_horiz(0, y+1, 159, r, g, b);
+	lcd_blit_horiz(0, y+2, 159, r, g, b);
+}
+
 /* LCD routines for keeping a cursor on the address/value row */
 static inline void clear_cursor(int y)
 {
-	lcd_blit_horiz(0, y, 159, 0, 0, 0);
-	lcd_blit_horiz(0, y+1, 159, 0, 0, 0);
-	lcd_blit_horiz(0, y+2, 159, 0, 0, 0);
+	blit_cursor_lines(y, 0, 0, 0);
 }
 
 static inline void blit_cursor(int x, int y)
@@ -243,7 +249,8 @@ static inline void blit_addrval()
 			blit_cursor(72 + 9*(edit_pos-4), 125);
 		}
 	} else {
-		clear_cursor(125);
+		/* Shade bottom of screen dark green when running */
+		blit_cursor_lines(125, 0, 9, 0);
 	}
 }
 
