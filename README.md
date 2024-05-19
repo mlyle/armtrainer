@@ -32,8 +32,8 @@ By a student, Robin K:
 * Students have complained that some invalid instructions-- BBAD, EF78-- seem to lock up the machine monitor.  I think I removed some safeguard code that I didn't think was necessary, but I need to inspect that again.
 * Input calls do not allow the user to enter the number "0".
 * The manual should be updated with some of the system calls that have not been documented
+  * Branch calculation formulae are wrong in the manual.
   * In particular, the input calls.
-  * Confirm backwards unconditional formula is correct
   * There may be a typo in the subtract register instruction.
-* The display icon and screen coordinate system could be more clearly explained
+  * The display icon and screen coordinate system could be more clearly explained
 * Overall curriculum, etc, should get posted here.
