@@ -10,6 +10,7 @@ static const struct instructions {
 	uint8_t rm : 4, rn : 4, rd : 4, immed:4, immed_len:4,
 		immed_br:1;
 } insn_list[] = {
+	{ 0x0000, 0xffff, "NOP", 0, 0, 0, 0, 0 },
 	{ 0xf800, 0x0000, "LSLi", 10, 0, 13, 5, 5 },    // 0000 0b
 	{ 0xf800, 0x2000, "MOVi", 0, 0, 5, 8, 8 },      // 0010 0b
 	{ 0xf800, 0x3000, "ADDi", 5, 0, 5, 8, 8 },      // 0011 0b
