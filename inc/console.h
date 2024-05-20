@@ -13,6 +13,7 @@ void console_clearscreen();
 void console_number_10_nocr(uint32_t n);
 void console_number_10(uint32_t n);
 void console_number_16(uint32_t n);
+void console_number_16_short(uint32_t n);
 void console_blit_dot(uint32_t color, uint8_t x, uint8_t y);
 void console_blit_icon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr);
 void console_blit_icon_transparent(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr);

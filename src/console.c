@@ -116,18 +116,36 @@ void console_number_10(uint32_t n)
 	console_number_10_nocr(n);
 }
 
+static inline void console_number_16_impl(uint32_t n, bool print_lead0)
+{
+	const char *str = to_hex32(n);
+	while (*str) {
+		if (((*str) != '0') || print_lead0) {
+			console_char_norefresh(*str);
+			print_lead0 = true;
+		}
+		str++;
+	}
+
+	lcd_refresh();
+}
+
 void console_number_16(uint32_t n)
 {
 	console_cr();
 	console_nl();
 
-	const char *str = to_hex32(n);
-	while (*str) {
-		console_char_norefresh(*str);
-		str++;
+	console_number_16_impl(n, true);
+}
+
+void console_number_16_short(uint32_t n)
+{
+	if (n == 0) {
+		console_char('0');
+		return;
 	}
 
-	lcd_refresh();
+	console_number_16_impl(n, false);
 }
 
 static inline void color_8bit_to_12bit(uint32_t color, uint8_t *r, uint8_t *g, uint8_t *b)
