@@ -507,7 +507,8 @@ static void perform_store()
 static void branch_calculator()
 {
 	if (!perform_load_impl()) {
-		console_str("\r\nInvalid addr\r\n");
+		console_str("\r\nInvalid srcaddr\r\n");
+		lcd_signalerror();
 		return;
 	}
 
@@ -524,7 +525,7 @@ static void branch_calculator()
 
 	offset /= 2;
 
-	offset += 2;
+	offset -= 2;
 
 	if (offset & 0x80000000) {
 		if (offset < 0xffffff00) {
@@ -533,13 +534,11 @@ static void branch_calculator()
 		}
 	}
 
-	console_str("\r\n");
-
-	console_number_16(offset & 0x7ff);
+	console_number_16_short(offset & 0x7ff);
 
 	console_str(" cond: ");
 
-	console_number_16(offset & 0xff);
+	console_number_16_short(offset & 0xff);
 
 	console_str("\r\nhit store or edit\r\n");
 
