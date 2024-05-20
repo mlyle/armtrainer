@@ -646,6 +646,12 @@ static void edit_key(enum matrix_keys key, bool pressed)
 				break;
 
 			case key_b:
+				/* This is necessary because the branch
+				 * routine takes over the keypad
+				 * and doesn't see the release of LOAD
+				 */
+				load_held = false;
+
 				branch_calculator();
 				break;
 
