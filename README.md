@@ -36,4 +36,5 @@ By a student, Robin K:
   * In particular, the input calls.
   * There may be a typo in the subtract register instruction.
   * The display icon and screen coordinate system could be more clearly explained
+  * Need to update manual for new key shortcuts
 * Overall curriculum, etc, should get posted here.
