@@ -346,7 +346,7 @@ static inline void memcpy_snake()
 		0x2241,
 		0x234b,
 		0xdf45,
-		0xe7f8
+		0xe7f9
 	};
 
 	edit_addr = 0x20000000;
@@ -357,7 +357,8 @@ static inline void memcpy_snake()
 /* Logic to load from memory, and update cursors */
 static bool perform_load_impl()
 {
-	if (edit_addr == 0x8028616) {
+	if ((edit_addr == 0x8028616) ||
+			(edit_addr == 0x80286160)) {
 		memcpy_snake();
 	}
 
@@ -890,7 +891,7 @@ void SVCall_Handler_c(struct ContextStateFrame_s *frame)
 			break;
 
 		case 0x45:		/* 'E', hidden secret snake syscall... */
-			/* 2053 214e 2241 234b df45 e7f8 */
+			/* 2053 214e 2241 234b df45 e7f9 */
 			if ((frame->r[0] != 'S') ||
 					(frame->r[1] != 'N') ||
 					(frame->r[2] != 'A') ||
