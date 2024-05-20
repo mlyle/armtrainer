@@ -263,6 +263,7 @@ static void read_number_key_changed(enum matrix_keys key, bool pressed)
 
 				case key_load:
 				case key_store:
+				case key_step:
 				case key_run:
 					console_char(' '); /* Erase cursor if necessary */
 					console_bs();
