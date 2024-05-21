@@ -513,6 +513,8 @@ static void branch_calculator()
 		return;
 	}
 
+	delay_ms(100);	/* Hack: Wait for B key to settle */
+
 	console_str("\r\n\r\nBranch Calculator\r\nTarget: ");
 
 	uint32_t target = console_read_number(16);
@@ -528,18 +530,31 @@ static void branch_calculator()
 
 	offset -= 2;
 
-	if (offset & 0x80000000) {
-		if (offset < 0xffffff00) {
+	if (offset & 0x40000000) {
+		if (offset < 0x7ffff800) {
 			console_str("\r\nToo far\r\n");
 			return;
 		}
+	} else if (offset > 0x7ff) {
+		console_str("\r\nToo far\r\n");
+		return;
 	}
 
 	console_number_16_short(offset & 0x7ff);
 
 	console_str(" cond: ");
 
-	console_number_16_short(offset & 0xff);
+	if (offset & 0x40000000) {
+		if (offset < 0x7fffff00) {
+			console_str("XX");
+		} else {
+			console_number_16_short(offset & 0xff);
+		}
+	} else if (offset > 0xff) {
+		console_str("XX");
+	} else {
+		console_number_16_short(offset & 0xff);
+	}
 
 	console_str("\r\nhit store or edit\r\n");
 
