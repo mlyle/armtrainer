@@ -63,6 +63,14 @@ static uint32_t edit_addr = 0;
 static uint32_t loaded_addr = 0;
 static uint32_t edit_val = 0;
 
+/* Last save slot loaded or written to.  Used to prevent warning when
+ * saving to same slot over and over.
+ */
+static int8_t save_slot = -1;
+
+/* Whether a store has been done and we should thus warn on loading */
+static bool unsafe_to_load = false;
+
 /* The current stack frame.  This is a global so that we can redraw
  * the screen without passing this everywhere.
  */
@@ -499,6 +507,8 @@ static void perform_store()
 		return;
 	}
 
+	unsafe_to_load = true;
+
 	*((uint16_t *) edit_addr) = edit_val;
 	edit_addr += 2;
 
@@ -561,15 +571,39 @@ static void branch_calculator()
 	edit_val = 0xe000 | (offset & 0x7ff);
 }
 
+static bool do_confirmation()
+{
+	console_str("\r\nType 1+ST if sure\r\n");
+	uint32_t num = console_read_number(10);
+	if (num != 1) {
+		console_str("CANCELED");
+		return false;
+	}
+
+	return true;
+}
+
 static void do_save(int slot)
 {
 	console_str("\r\nSave #");
 	console_number_10_nocr(slot);
 
+	console_str(": ");
+
+	if (save_slot != slot) {
+		if (!do_confirmation()) {
+			return;
+		}
+	}
+
+
 	if (save_writesave(slot)) {
-		console_str(": OK");
+		console_str("SAVED");
+
+		save_slot = slot;
+		unsafe_to_load = false;
 	} else {
-		console_str(": FAIL");
+		console_str("FAIL");
 	}
 
 	perform_load_impl();
@@ -580,10 +614,21 @@ static void do_load(int slot)
 	console_str("\r\nLoad #");
 	console_number_10_nocr(slot);
 
+	console_str(": ");
+
+	if (unsafe_to_load) {
+		if (!do_confirmation()) {
+			return;
+		}
+	}
+
 	if (save_readsave(slot)) {
-		console_str(": OK");
+		console_str("LOADED");
+		save_slot = slot;
+
+		unsafe_to_load = false;
 	} else {
-		console_str(": FAIL");
+		console_str("FAIL");
 	}
 
 	edit_addr = 0x20000000;
@@ -649,23 +694,26 @@ static void edit_key(enum matrix_keys key, bool pressed)
 			case key_4:
 			case key_5:
 			case key_6:
+				/* This is necessary because the
+				 * routine may take over the keypad
+				 * and doesn't see the release of LOAD
+				 */
+				load_held = false;
 				do_save(key - key_4);
 				break;
 
 			case key_8:
 			case key_9:
+				load_held = false;
 				do_load(key - key_8);
 				break;
 
 			case key_a:
+				load_held = false;
 				do_load(2);
 				break;
 
 			case key_b:
-				/* This is necessary because the branch
-				 * routine takes over the keypad
-				 * and doesn't see the release of LOAD
-				 */
 				load_held = false;
 
 				branch_calculator();
