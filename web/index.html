@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171915">
+  <title>MPTrainer Web</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <p class="eyebrow">ARM microprocessor trainer</p>
+        <h1>MPTrainer Web</h1>
+      </div>
+      <div class="hardware-status" aria-label="Trainer LED status">
+        <span id="led" class="led"></span>
+        <span>LED</span>
+      </div>
+    </header>
+
+    <section class="trainer" aria-label="Virtual MPTrainer">
+      <div class="screen-shell">
+        <canvas id="screen" width="160" height="128"
+          aria-label="MPTrainer LCD display"></canvas>
+      </div>
+
+      <div class="status-row" aria-live="polite">
+        <span id="state">Starting emulator…</span>
+        <span id="machine"></span>
+      </div>
+
+      <div class="controls">
+        <button id="run" type="button">Run <kbd>G</kbd></button>
+        <button id="step" type="button">Step <kbd>Space</kbd></button>
+        <button id="reset" type="button">Reset <kbd>R</kbd></button>
+        <label class="file-button">
+          Load .bin
+          <input id="program" type="file" accept=".bin,application/octet-stream">
+        </label>
+      </div>
+    </section>
+
+    <section class="key-guide" aria-labelledby="keyboard-title">
+      <h2 id="keyboard-title">Keyboard</h2>
+      <dl>
+        <div><dt><kbd>0</kbd>–<kbd>9</kbd>, <kbd>A</kbd>–<kbd>F</kbd></dt><dd>Enter hex digits</dd></div>
+        <div><dt><kbd>Enter</kbd></dt><dd>Address / select value</dd></div>
+        <div><dt><kbd>L</kbd></dt><dd>Load memory</dd></div>
+        <div><dt><kbd>S</kbd></dt><dd>Store memory</dd></div>
+        <div><dt><kbd>Backspace</kbd></dt><dd>Move cursor left</dd></div>
+        <div><dt><kbd>G</kbd></dt><dd>Run / stop</dd></div>
+        <div><dt><kbd>Space</kbd> or <kbd>.</kbd></dt><dd>Single step</dd></div>
+        <div><dt><kbd>R</kbd></dt><dd>Reset CPU</dd></div>
+      </dl>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
