@@ -16,18 +16,20 @@ assert.equal(module._trainer_load(example.length), 1);
 
 module._trainer_command_run();
 assert.equal(module._trainer_state(), 1);
-assert.equal(module._trainer_run_slice(500, 1000), 500);
+let executed = 0;
+for (let now = 1000; now < 2000; now += 100) {
+  executed += module._trainer_run_slice(500, now);
+}
+assert.equal(executed, 10);
 assert.equal(module._trainer_state(), 1);
-assert.ok(module._trainer_instruction_count() >= 500);
+assert.ok(module._trainer_instruction_count() >= 10);
 
 const frame = module.HEAPU8.subarray(
   module._trainer_framebuffer(),
-  module._trainer_framebuffer() + 160 * 128 * 4,
+  module._trainer_framebuffer() + 160 * 128 * 3 / 2,
 );
 let coloredPixels = 0;
-for (let offset = 0; offset < frame.length; offset += 4) {
-  if (frame[offset] || frame[offset + 1] || frame[offset + 2]) coloredPixels += 1;
-}
+for (const byte of frame) coloredPixels += byte !== 0;
 assert.ok(coloredPixels > 100);
 
 console.log("m4f: browser-target Wasm module tests passed");

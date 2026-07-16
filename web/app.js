@@ -1,12 +1,20 @@
+import { GifRecorder } from "./gif.js";
+
 const canvas = document.querySelector("#screen");
 const context = canvas.getContext("2d", { alpha: false });
 const stateElement = document.querySelector("#state");
 const machineElement = document.querySelector("#machine");
 const ledElement = document.querySelector("#led");
 const fileInput = document.querySelector("#program");
+const recordButton = document.querySelector("#record");
+const recordStart = document.querySelector("#record-start");
+const recordEnd = document.querySelector("#record-end");
+const recordStatus = document.querySelector("#record-status");
 const worker = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
 
 let ready = false;
+let gifRecorder = null;
+let gifRange = null;
 
 const stateNames = ["Stopped", "Running", "Waiting for input", "Fault"];
 const stopNames = [
@@ -35,8 +43,37 @@ worker.addEventListener("message", (event) => {
     stateElement.textContent = "Stopped";
     loadBundledExample();
   } else if (message.type === "frame") {
-    context.putImageData(new ImageData(new Uint8ClampedArray(message.pixels), 160, 128), 0, 0);
+    const pixels = new Uint8ClampedArray(message.pixels);
+    context.putImageData(new ImageData(pixels, 160, 128), 0, 0);
     updateStatus(message);
+    if (message.recordFrame && gifRecorder) {
+      gifRecorder.addFrame(pixels, message.fast ? 1 : 10);
+      recordStatus.textContent = `Capturing instruction ${message.instructions} of ${gifRange.end}`;
+    }
+  } else if (message.type === "record-complete") {
+    try {
+      const bytes = gifRecorder.encode();
+      const url = URL.createObjectURL(new Blob([bytes], { type: "image/gif" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `mptrainer-${gifRange.start}-${gifRange.end}.gif`;
+      link.hidden = true;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      recordStatus.textContent = `Recorded ${gifRecorder.frames.length} frames`;
+    } catch (error) {
+      recordStatus.textContent = `Could not encode GIF: ${error.message}`;
+    }
+    gifRecorder = null;
+    gifRange = null;
+    recordButton.disabled = false;
+  } else if (message.type === "record-error") {
+    recordStatus.textContent = message.message;
+    gifRecorder = null;
+    gifRange = null;
+    recordButton.disabled = false;
   } else if (message.type === "error") {
     stateElement.textContent = message.message;
   }
@@ -68,6 +105,25 @@ document.querySelector("#run").addEventListener("click", () => worker.postMessag
 document.querySelector("#step").addEventListener("click", () => worker.postMessage({ type: "step" }));
 document.querySelector("#reset").addEventListener("click", () => worker.postMessage({ type: "reset" }));
 
+recordButton.addEventListener("click", () => {
+  const start = recordStart.valueAsNumber;
+  const end = recordEnd.valueAsNumber;
+  if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end)
+      || start < 0 || end < start) {
+    recordStatus.textContent = "Enter a valid inclusive instruction range";
+    return;
+  }
+  if (end - start > 5000) {
+    recordStatus.textContent = "Choose at most 5,001 frames per recording";
+    return;
+  }
+  gifRecorder = new GifRecorder(160, 128);
+  gifRange = { start, end };
+  recordButton.disabled = true;
+  recordStatus.textContent = `Armed for instruction ${start}`;
+  worker.postMessage({ type: "record", start, end });
+});
+
 function trainerKey(event) {
   if (event.metaKey || event.ctrlKey || event.altKey) return null;
   if (/^[0-9a-f]$/i.test(event.key)) return event.key.toLowerCase().charCodeAt(0);
@@ -79,7 +135,7 @@ function trainerKey(event) {
 }
 
 window.addEventListener("keydown", (event) => {
-  if (event.target === fileInput || event.target instanceof HTMLButtonElement) return;
+  if (event.target instanceof HTMLInputElement || event.target instanceof HTMLButtonElement) return;
   if (!event.repeat && event.key.toLowerCase() === "r" && !event.metaKey && !event.ctrlKey) {
     event.preventDefault();
     worker.postMessage({ type: "reset" });
@@ -92,7 +148,7 @@ window.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("keyup", (event) => {
-  if (event.target === fileInput || event.target instanceof HTMLButtonElement) return;
+  if (event.target instanceof HTMLInputElement || event.target instanceof HTMLButtonElement) return;
   const key = trainerKey(event);
   if (key === null) return;
   event.preventDefault();

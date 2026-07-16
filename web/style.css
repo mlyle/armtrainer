@@ -111,6 +111,39 @@ canvas {
   gap: .65rem;
 }
 
+.record-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(8rem, 1fr)) auto minmax(8rem, auto);
+  gap: .65rem;
+  align-items: end;
+  margin-top: .75rem;
+  padding-top: .75rem;
+  border-top: 1px solid #3f4739;
+}
+
+.record-controls label {
+  display: grid;
+  gap: .35rem;
+  color: #aeb9a5;
+  font-size: .72rem;
+}
+
+.record-controls input {
+  width: 100%;
+  min-height: 3rem;
+  padding: .65rem .7rem;
+  border: 1px solid #626c59;
+  border-radius: .55rem;
+  background: #171a15;
+  color: #f3f5f0;
+}
+
+#record-status {
+  align-self: center;
+  color: #aeb9a5;
+  font-size: .72rem;
+}
+
 button, .file-button {
   display: flex;
   min-height: 3rem;
@@ -175,6 +208,8 @@ dd { color: #8f9b87; font-size: .78rem; }
   .app { width: min(100% - 1rem, 52rem); padding-top: 1rem; }
   .trainer { padding: .75rem; border-radius: .85rem; }
   .controls { grid-template-columns: repeat(2, 1fr); }
+  .record-controls { grid-template-columns: 1fr 1fr; }
+  #record-status { grid-column: 1 / -1; }
   dl { grid-template-columns: 1fr; }
   .status-row { flex-direction: column; gap: .25rem; }
 }

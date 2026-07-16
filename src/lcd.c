@@ -1,13 +1,18 @@
 #include <string.h>
 
-#include <armdio.h>
-#include <delayutil.h>
+#include <lcdutil.h>
 #include <font8x13.h>
 #include <font4x11.h>
+
+#ifndef TRAINER_WEB
+#include <armdio.h>
+#include <delayutil.h>
 #include <stm32f4xx.h>
+#endif
 
 /* For ST7735S 160x128 display */
 
+#ifndef TRAINER_WEB
 #ifdef OLD_HW
 static DIOTag_t lcd_rst = GPIOC_DIO(15);
 static DIOTag_t lcd_cs = GPIOB_DIO(9);
@@ -32,9 +37,32 @@ static const uint32_t lcd_dma_flags = DMA_FLAG_FEIF4 | DMA_FLAG_DMEIF4 |
 		DMA_FLAG_TEIF4 | DMA_FLAG_HTIF4 | lcd_dma_tcif;
 
 static uint32_t lcd_framecount;
+#endif
 
 static uint8_t lcd_fbuf[160*128*3/2];
+static uint32_t lcd_revision;
 
+const uint8_t *lcd_framebuffer(void)
+{
+	return lcd_fbuf;
+}
+
+size_t lcd_framebuffer_size(void)
+{
+	return sizeof(lcd_fbuf);
+}
+
+uint32_t lcd_frame_revision(void)
+{
+	return lcd_revision;
+}
+
+void lcd_frame_published(void)
+{
+	lcd_revision++;
+}
+
+#ifndef TRAINER_WEB
 static inline void lcd_spi_waitcompletion()
 {
 	while (!(lcd_spi->SR & SPI_SR_TXE));
@@ -133,6 +161,7 @@ static inline void lcd_send_data_bulk(uint8_t *data, int len)
 
 	lcd_setup_dma(data, len);
 }
+#endif
 
 static inline void lcd_blit_internal(int x, int y, uint8_t r, uint8_t g, uint8_t b)
 {
@@ -311,6 +340,7 @@ int lcd_blit_string(const char *str, int x, int y, uint8_t r, uint8_t g, uint8_t
 	return x;
 }
 
+#ifndef TRAINER_WEB
 static inline void lcd_dma_wait_finish()
 {
 	if (DMA_GetCmdStatus(lcd_dma_stream) == DISABLE) {
@@ -346,6 +376,7 @@ void lcd_refresh()
 	lcd_dma_wait_finish();
 
 	lcd_framecount++;
+	lcd_frame_published();
 
 	if (!(lcd_framecount & 15)) {
 		lcd_send_command(0x2c);		// Ram WRITE command
@@ -371,6 +402,7 @@ void lcd_signalerror()
 
 	lcd_refresh();
 }
+#endif
 
 void lcd_test_pattern()
 {
@@ -426,6 +458,7 @@ void lcd_test_pattern()
 	lcd_refresh();
 }
 
+#ifndef TRAINER_WEB
 void lcd_init()
 {
 	// Initially, in reset.
@@ -480,3 +513,4 @@ void lcd_init()
 
 	lcd_send_command(0x2c);		// Ram WRITE command
 }
+#endif

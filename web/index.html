@@ -40,6 +40,17 @@
           <input id="program" type="file" accept=".bin,application/octet-stream">
         </label>
       </div>
+
+      <div class="record-controls" aria-label="Record display to GIF">
+        <label>Start instruction
+          <input id="record-start" type="number" min="0" step="1" value="0">
+        </label>
+        <label>End instruction
+          <input id="record-end" type="number" min="0" step="1" value="100">
+        </label>
+        <button id="record" type="button">Record GIF</button>
+        <span id="record-status" aria-live="polite"></span>
+      </div>
     </section>
 
     <section class="key-guide" aria-labelledby="keyboard-title">

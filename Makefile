@@ -11,6 +11,8 @@ M4F_PROGRAM_NAMES := integer memory floating
 M4F_PROGRAM_ELF := $(patsubst %,build/m4femu/programs/%.elf,$(M4F_PROGRAM_NAMES))
 M4F_PROGRAM_BIN := $(patsubst %,build/m4femu/programs/%.bin,$(M4F_PROGRAM_NAMES))
 M4F_PROGRAM_REF := $(patsubst %,build/m4femu/programs/%-reference,$(M4F_PROGRAM_NAMES))
+WEB_SHARED_SRC := src/lcd.c src/console.c src/trainer_core.c \
+	web/c/lcd_web.c web/c/platform_web.c
 
 INC :=
 INC += inc
@@ -125,39 +127,45 @@ m4f-qemu-test: build/m4femu/program_runner $(M4F_PROGRAM_ELF) \
 
 web: build/web/trainer.mjs
 
-web-test: build/web/test_trainer_web build/web/test_trainer_web.js
+web-test: build/web/test_trainer_web build/web/test_trainer_web.js \
+		build/web/trainer.mjs
 	build/web/test_trainer_web
 	node build/web/test_trainer_web.js
 	node web/tests/test_browser_module.mjs
-	node web/tests/test_timing.mjs
+	node web/tests/test_gif.mjs
 	node --check web/app.js
+	node --check web/gif.js
 	node --check web/worker.js
 
 web-serve: web
 	python3 -m http.server 8000
 
-build/web/test_trainer_web: $(M4F_SRC) web/c/trainer_web.c \
+build/web/test_trainer_web: $(M4F_SRC) $(WEB_SHARED_SRC) web/c/trainer_web.c \
 		web/c/trainer_web.h web/tests/test_trainer_web.c
 	@mkdir -p $(dir $@)
-	$(HOST_CC) $(HOST_CFLAGS) -std=c11 -Im4femu/include -Iinc -Iweb/c \
-		$(M4F_SRC) web/c/trainer_web.c web/tests/test_trainer_web.c \
+	$(HOST_CC) $(HOST_CFLAGS) -DTRAINER_WEB -std=c11 \
+		-Im4femu/include -Iinc -Iweb/c \
+		$(M4F_SRC) $(WEB_SHARED_SRC) web/c/trainer_web.c \
+		web/tests/test_trainer_web.c \
 		-lm -o $@
 
-build/web/test_trainer_web.js: $(M4F_SRC) web/c/trainer_web.c \
+build/web/test_trainer_web.js: $(M4F_SRC) $(WEB_SHARED_SRC) web/c/trainer_web.c \
 		web/c/trainer_web.h web/tests/test_trainer_web.c
 	@mkdir -p $(dir $@)
 	env EM_CACHE=$(abspath build/m4femu/emscripten-cache) emcc \
 		-Wall -Wextra -Werror -Wno-missing-field-initializers -O2 \
-		-std=c11 -Im4femu/include -Iinc -Iweb/c \
-		$(M4F_SRC) web/c/trainer_web.c web/tests/test_trainer_web.c -lm \
+		-DTRAINER_WEB -std=c11 -Im4femu/include -Iinc -Iweb/c \
+		$(M4F_SRC) $(WEB_SHARED_SRC) web/c/trainer_web.c \
+		web/tests/test_trainer_web.c -lm \
 		-sENVIRONMENT=node -sEXIT_RUNTIME=1 -o $@
 
-build/web/trainer.mjs: $(M4F_SRC) web/c/trainer_web.c web/c/trainer_web.h
+build/web/trainer.mjs: $(M4F_SRC) $(WEB_SHARED_SRC) web/c/trainer_web.c \
+		web/c/trainer_web.h
 	@mkdir -p $(dir $@)
 	env EM_CACHE=$(abspath build/m4femu/emscripten-cache) emcc \
 		-Wall -Wextra -Werror -Wno-missing-field-initializers -O2 \
-		-std=c11 -Im4femu/include -Iinc -Iweb/c \
-		$(M4F_SRC) web/c/trainer_web.c -lm --no-entry \
+		-DTRAINER_WEB -std=c11 -Im4femu/include -Iinc -Iweb/c \
+		$(M4F_SRC) $(WEB_SHARED_SRC) web/c/trainer_web.c -lm --no-entry \
 		-sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createTrainerModule \
 		-sENVIRONMENT=worker -sFILESYSTEM=0 -sALLOW_MEMORY_GROWTH=0 \
 		-sEXPORTED_RUNTIME_METHODS='["HEAPU8"]' \

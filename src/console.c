@@ -164,10 +164,9 @@ void console_blit_dot(uint32_t color, uint8_t x, uint8_t y)
 	lcd_blit(x, y, r, g, b);
 }
 
-static inline void console_blit_icon_impl(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr, int transparent)
+static inline void console_blit_icon_impl(uint32_t color, uint8_t x, uint8_t y,
+		const uint16_t *lines, int transparent)
 {
-	uint16_t *lines = (uint16_t *)ret_addr;
-
 	uint8_t r, g, b;
 
 	color_8bit_to_12bit(color, &r, &g, &b);
@@ -190,12 +189,20 @@ static inline void console_blit_icon_impl(uint32_t color, uint8_t x, uint8_t y, 
 
 void console_blit_icon(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr)
 {
-	console_blit_icon_impl(color, x, y, ret_addr, 0);
+	console_blit_icon_impl(color, x, y,
+		(const uint16_t *)(uintptr_t)ret_addr, 0);
 }
 
 void console_blit_icon_transparent(uint32_t color, uint8_t x, uint8_t y, uint32_t ret_addr)
 {
-	console_blit_icon_impl(color, x, y, ret_addr, 1);
+	console_blit_icon_impl(color, x, y,
+		(const uint16_t *)(uintptr_t)ret_addr, 1);
+}
+
+void console_blit_icon_data(uint32_t color, uint8_t x, uint8_t y,
+		const uint16_t lines[16], bool transparent)
+{
+	console_blit_icon_impl(color, x, y, lines, transparent);
 }
 
 void console_set_drawcolor(uint8_t color)
@@ -214,7 +221,9 @@ struct read_number_state_s {
 	uint8_t pos;
 	uint8_t base;
 	bool finished;
-} read_number_state;
+};
+
+static struct read_number_state_s read_number_state;
 
 static bool handle_digit(int digit)
 {
@@ -237,7 +246,7 @@ static bool handle_digit(int digit)
 	return true;
 }
 
-static void read_number_key_changed(enum matrix_keys key, bool pressed)
+bool console_read_number_key(enum matrix_keys key, bool pressed)
 {
 	/* XXX: key_run / key_step should really escape the
 	 * program.
@@ -249,7 +258,7 @@ static void read_number_key_changed(enum matrix_keys key, bool pressed)
 				case key_0:
 					if (handle_digit(0)) {
 						console_char(key);
-						return;
+						return read_number_state.finished;
 					}
 
 					break;
@@ -259,7 +268,7 @@ static void read_number_key_changed(enum matrix_keys key, bool pressed)
 					console_char(' '); /* Erase cursor if necessary */
 					console_bs();
 					console_bs();
-					return;
+					return read_number_state.finished;
 
 				case key_load:
 				case key_store:
@@ -269,7 +278,7 @@ static void read_number_key_changed(enum matrix_keys key, bool pressed)
 					console_bs();
 					console_cr(); console_nl();
 					read_number_state.finished = true;
-					return;
+					return read_number_state.finished;
 
 				default:
 					break;
@@ -279,26 +288,48 @@ static void read_number_key_changed(enum matrix_keys key, bool pressed)
 		if ((key >= key_1) && (key <= key_9)) {
 			if (handle_digit(key - key_0)) {
 				console_char(key);
-				return;
+				return read_number_state.finished;
 			}
 		}
 
 		if ((key >= key_a) && (key <= key_f)) {
 			if (handle_digit(key - key_a + 10)) {
 				console_char(key);
-				return;
+				return read_number_state.finished;
 			}
 		}
 
 		lcd_signalerror();
 	}
+
+	return read_number_state.finished;
+}
+
+static void read_number_key_changed(enum matrix_keys key, bool pressed)
+{
+	console_read_number_key(key, pressed);
+}
+
+void console_read_number_begin(uint8_t base)
+{
+	read_number_state = (struct read_number_state_s) { .base = base };
+}
+
+bool console_read_number_finished(void)
+{
+	return read_number_state.finished;
+}
+
+uint32_t console_read_number_value(void)
+{
+	return read_number_state.accum;
 }
 
 uint32_t console_read_number(uint8_t base)
 {
 	matrix_cb_t prev_keycallback = matrix_set_callback(read_number_key_changed);
 
-	read_number_state = (struct read_number_state_s) { .base = base };
+	console_read_number_begin(base);
 
 	int iter = 0;
 
