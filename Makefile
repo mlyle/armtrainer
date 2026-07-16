@@ -1,4 +1,6 @@
 ARM_SDK_PREFIX := arm-none-eabi-
+HOST_CC ?= cc
+HOST_CFLAGS ?= -Wall -Wextra -Werror -Wno-missing-field-initializers -O2
 
 INC :=
 INC += inc
@@ -71,13 +73,25 @@ CFLAGS += -DHSE_VALUE=25000000
 
 LDFLAGS += -Tsrc/stm32f411.ld
 
+.PHONY: all clean flash manual tools FORCE
+
 all: build/ef_monitor.bin
+
+tools: build/tools/disasmthumb build/tools/hex2bin
+
+build/tools/disasmthumb: tools/disasmthumb.c inc/thumbdisasm.h
+	@mkdir -p $(dir $@)
+	$(HOST_CC) $(HOST_CFLAGS) -Iinc $< -o $@
+
+build/tools/hex2bin: tools/hex2bin.c
+	@mkdir -p $(dir $@)
+	$(HOST_CC) $(HOST_CFLAGS) $< -o $@
 
 build/ef_monitor.bin: build/monitor.bin
 	cat build/monitor.bin > $@
 
 flash: build/ef_monitor.bin
-	dfu-util -a 0 -i 0 -s 0x08000000:leave -D  build/monitor.bin
+	dfu-util -a 0 -i 0 -s 0x08000000 -D  build/monitor.bin
 #	openocd -f /opt/homebrew/share/openocd/scripts/interface/stlink.cfg -f /opt/homebrew/share/openocd/scripts/target/stm32f4x.cfg -c "program build/ef_monitor.bin verify reset exit 0x08000000"
 
 %.bin: %

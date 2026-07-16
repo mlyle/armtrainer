@@ -1,0 +1,42 @@
+20000000: 2037    MOVi 37 r0
+20000002: 2100    MOVi 00 r1
+20000004: 2200    MOVi 00 r2
+20000006: df25    SYSc 25
+20000006: 0000                    ; ICONDATA                   
+20000008: 0380                    ; ICONDATA         ###       
+2000000a: 0440                    ; ICONDATA        #   #      
+2000000c: 0440                    ; ICONDATA        #   #      
+2000000e: 0440                    ; ICONDATA        #   #      
+20000010: 0380                    ; ICONDATA         ###       
+20000012: 1100                    ; ICONDATA      #   #        
+20000014: 1ff0                    ; ICONDATA      #########    
+20000016: 0110                    ; ICONDATA          #   #    
+20000018: 0100                    ; ICONDATA          #        
+2000001a: 0100                    ; ICONDATA          #        
+2000001c: 0280                    ; ICONDATA         # #       
+2000001e: 0440                    ; ICONDATA        #   #      
+20000020: 0820                    ; ICONDATA       #     #     
+20000022: 0000                    ; ICONDATA                   
+20000024: 0000                    ; ICONDATA                   
+20000028: df20    SYSc 20
+2000002a: 2037    MOVi 37 r0
+2000002c: 2100    MOVi 00 r1
+2000002e: 2200    MOVi 00 r2
+20000030: df25    SYSc 25
+20000030: 0000                    ; ICONDATA                   
+20000032: 0380                    ; ICONDATA         ###       
+20000034: 0440                    ; ICONDATA        #   #      
+20000036: 0440                    ; ICONDATA        #   #      
+20000038: 0440                    ; ICONDATA        #   #      
+2000003a: 1390                    ; ICONDATA      #  ###  #    
+2000003c: 0920                    ; ICONDATA       #  #  #     
+2000003e: 0540                    ; ICONDATA        # # #      
+20000040: 0380                    ; ICONDATA         ###       
+20000042: 0100                    ; ICONDATA          #        
+20000044: 0100                    ; ICONDATA          #        
+20000046: 0280                    ; ICONDATA         # #       
+20000048: 0440                    ; ICONDATA        #   #      
+2000004a: 0820                    ; ICONDATA       #     #     
+2000004c: 0000                    ; ICONDATA                   
+2000004e: 0000                    ; ICONDATA                   
+20000052: e7d8    B    20000006

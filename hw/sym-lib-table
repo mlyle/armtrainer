@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "MicroTrainer-rescue")(type "KiCad")(uri "${KIPRJMOD}/MicroTrainer-rescue.kicad_sym")(options "")(descr ""))
+)

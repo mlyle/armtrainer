@@ -1,0 +1,48 @@
+20000000: 20c0    MOVi C0 r0
+20000002: 2100    MOVi 00 r1
+20000004: 2200    MOVi 00 r2
+20000006: df25    SYSc 25
+20000006: 0000                    ; ICONDATA                   
+20000008: 07e0                    ; ICONDATA        ######     
+2000000a: 0810                    ; ICONDATA       #      #    
+2000000c: 1008                    ; ICONDATA      #        #   
+2000000e: 2664                    ; ICONDATA     #  ##  ##  #  
+20000010: 6666                    ; ICONDATA    ##  ##  ##  ## 
+20000012: 4662                    ; ICONDATA    #   ##  ##   # 
+20000014: 4002                    ; ICONDATA    #            # 
+20000016: 4002                    ; ICONDATA    #            # 
+20000018: 4812                    ; ICONDATA    #  #      #  # 
+2000001a: 4422                    ; ICONDATA    #   #    #   # 
+2000001c: 23c6                    ; ICONDATA     #   ####   ## 
+2000001e: 300c                    ; ICONDATA     ##        ##  
+20000020: 1818                    ; ICONDATA      ##      ##   
+20000022: 0ff0                    ; ICONDATA       ########    
+20000024: 0000                    ; ICONDATA                   
+20000028: 2001    MOVi 01 r0
+2000002a: df12    SYSc 12
+2000002c: df20    SYSc 20
+2000002e: 20c0    MOVi C0 r0
+20000030: 2100    MOVi 00 r1
+20000032: 2200    MOVi 00 r2
+20000034: df25    SYSc 25
+20000034: 0000                    ; ICONDATA                   
+20000036: 07e0                    ; ICONDATA        ######     
+20000038: 0810                    ; ICONDATA       #      #    
+2000003a: 1008                    ; ICONDATA      #        #   
+2000003c: 2664                    ; ICONDATA     #  ##  ##  #  
+2000003e: 6666                    ; ICONDATA    ##  ##  ##  ## 
+20000040: 4662                    ; ICONDATA    #   ##  ##   # 
+20000042: 4002                    ; ICONDATA    #            # 
+20000044: 4002                    ; ICONDATA    #            # 
+20000046: 43c2                    ; ICONDATA    #    ####    # 
+20000048: 4422                    ; ICONDATA    #   #    #   # 
+2000004a: 2816                    ; ICONDATA     # #      # ## 
+2000004c: 300c                    ; ICONDATA     ##        ##  
+2000004e: 1818                    ; ICONDATA      ##      ##   
+20000050: 0ff0                    ; ICONDATA       ########    
+20000052: 0000                    ; ICONDATA                   
+20000056: 2001    MOVi 01 r0
+20000058: df12    SYSc 12
+2000005a: df20    SYSc 20
+2000005c: e7d0    B    20000000
+20000064: 0064    LSLi r4 01 r4

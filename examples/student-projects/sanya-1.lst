@@ -1,0 +1,39 @@
+20000000: 20ff    MOVi FF r0
+20000002: 2100    MOVi 00 r1
+20000004: 2200    MOVi 00 r2
+20000006: df25    SYSc 25
+20000006: 0006                    ; ICONDATA                ## 
+20000008: 03c0                    ; ICONDATA         ####      
+2000000a: 0c30                    ; ICONDATA       ##    ##    
+2000000c: 1008                    ; ICONDATA      #        #   
+2000000e: 20c4                    ; ICONDATA     #     ##   #  
+20000010: 20c4                    ; ICONDATA     #     ##   #  
+20000012: 2004                    ; ICONDATA     #          #  
+20000014: 2004                    ; ICONDATA     #          #  
+20000016: 207c                    ; ICONDATA     #      #####  
+20000018: 2004                    ; ICONDATA     #          #  
+2000001a: 2004                    ; ICONDATA     #          #  
+2000001c: 2004                    ; ICONDATA     #          #  
+2000001e: 1008                    ; ICONDATA      #        #   
+20000020: 0c30                    ; ICONDATA       ##    ##    
+20000022: 03c0                    ; ICONDATA         ####      
+20000024: 0000                    ; ICONDATA                   
+20000028: df25    SYSc 25
+20000028: 0000                    ; ICONDATA                   
+2000002a: 03c0                    ; ICONDATA         ####      
+2000002c: 0c30                    ; ICONDATA       ##    ##    
+2000002e: 1008                    ; ICONDATA      #        #   
+20000030: 20c4                    ; ICONDATA     #     ##   #  
+20000032: 20c4                    ; ICONDATA     #     ##   #  
+20000034: 2008                    ; ICONDATA     #         #   
+20000036: 2010                    ; ICONDATA     #        #    
+20000038: 2020                    ; ICONDATA     #       #     
+2000003a: 2010                    ; ICONDATA     #        #    
+2000003c: 2008                    ; ICONDATA     #         #   
+2000003e: 2004                    ; ICONDATA     #          #  
+20000040: 1008                    ; ICONDATA      #        #   
+20000042: 0c30                    ; ICONDATA       ##    ##    
+20000044: 03c0                    ; ICONDATA         ####      
+20000046: 03c0                    ; ICONDATA         ####      
+2000004a: 3101    ADDi r1 01 r1
+2000004c: e7db    B    20000006

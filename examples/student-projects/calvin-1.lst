@@ -1,0 +1,110 @@
+20000000: 20f8    MOVi F8 r0
+20000002: df25    SYSc 25
+20000002: 0248                    ; ICONDATA         #  #  #   
+20000004: 0550                    ; ICONDATA        # # # #    
+20000006: 08a8                    ; ICONDATA       #   # # #   
+20000008: 0404                    ; ICONDATA        #       #  
+2000000a: 0888                    ; ICONDATA       #   #   #   
+2000000c: 0844                    ; ICONDATA       #    #   #  
+2000000e: 1074                    ; ICONDATA      #     ### #  
+20000010: 08f0                    ; ICONDATA       #   ####    
+20000012: 01c0                    ; ICONDATA          ###      
+20000014: 0530                    ; ICONDATA        # #  ##    
+20000016: 0f34                    ; ICONDATA       ####  ## #  
+20000018: 089e                    ; ICONDATA       #   #  #### 
+2000001a: 0b4e                    ; ICONDATA       # ## #  ### 
+2000001c: 1c26                    ; ICONDATA      ###    #  ## 
+2000001e: 342c                    ; ICONDATA     ## #    # ##  
+20000020: 1ff8                    ; ICONDATA      ##########   
+20000024: 2044    MOVi 44 r0
+20000026: df23    SYSc 23
+20000028: 204f    MOVi 4F r0
+2000002a: df23    SYSc 23
+2000002c: df23    SYSc 23
+2000002e: 2046    MOVi 46 r0
+20000030: df23    SYSc 23
+20000032: 4603    MOVr r0 r3
+20000034: 4618    MOVr r3 r0
+20000036: df21    SYSc 21
+20000038: 2048    MOVi 48 r0
+2000003a: df23    SYSc 23
+2000003c: 2050    MOVi 50 r0
+2000003e: df23    SYSc 23
+20000042: 2048    MOVi 48 r0
+20000044: df23    SYSc 23
+20000046: 2069    MOVi 69 r0
+20000048: df23    SYSc 23
+2000004a: 2069    MOVi 69 r0
+2000004c: df23    SYSc 23
+2000004e: 2003    MOVi 03 r0
+20000050: df21    SYSc 21
+20000052: 2052    MOVi 52 r0
+20000054: df23    SYSc 23
+20000056: 2045    MOVi 45 r0
+20000058: df23    SYSc 23
+2000005a: 2044    MOVi 44 r0
+2000005c: df23    SYSc 23
+2000005e: 204f    MOVi 4F r0
+20000060: df23    SYSc 23
+20000062: 2004    MOVi 04 r0
+20000064: df21    SYSc 21
+20000066: df2a    SYSc 2A
+20000068: 2104    MOVi 04 r1
+2000006a: 4288    CMPr r1 r0
+2000006c: d0c7    BZ   1FFFFFFE
+2000006e: 2048    MOVi 48 r0
+20000070: df23    SYSc 23
+20000072: 2069    MOVi 69 r0
+20000074: df23    SYSc 23
+20000076: 2069    MOVi 69 r0
+20000078: df23    SYSc 23
+2000007a: 2003    MOVi 03 r0
+2000007c: df23    SYSc 23
+2000007e: 2044    MOVi 44 r0
+20000080: df23    SYSc 23
+20000082: 204f    MOVi 4F r0
+20000084: df23    SYSc 23
+20000086: df23    SYSc 23
+20000088: 2046    MOVi 46 r0
+2000008a: df23    SYSc 23
+2000008c: 203a    MOVi 3A r0
+2000008e: df23    SYSc 23
+20000090: 2003    MOVi 03 r0
+20000092: df23    SYSc 23
+20000094: 2049    MOVi 49 r0
+20000096: df23    SYSc 23
+20000098: 2003    MOVi 03 r0
+2000009a: df23    SYSc 23
+2000009c: 2068    MOVi 68 r0
+2000009e: df23    SYSc 23
+200000a0: 2061    MOVi 61 r0
+200000a2: df23    SYSc 23
+200000a4: 2074    MOVi 74 r0
+200000a6: df23    SYSc 23
+200000a8: 2065    MOVi 65 r0
+200000aa: df23    SYSc 23
+200000ac: 2003    MOVi 03 r0
+200000ae: df23    SYSc 23
+200000b0: 2079    MOVi 79 r0
+200000b2: df23    SYSc 23
+200000b4: 206f    MOVi 6F r0
+200000b6: df23    SYSc 23
+200000b8: 2075    MOVi 75 r0
+200000ba: df23    SYSc 23
+200000bc: 2003    MOVi 03 r0
+200000be: df23    SYSc 23
+200000c0: 2059    MOVi 59 r0
+200000c2: df23    SYSc 23
+200000c4: 204f    MOVi 4F r0
+200000c6: df23    SYSc 23
+200000c8: 2055    MOVi 55 r0
+200000ca: df23    SYSc 23
+200000cc: 203a    MOVi 3A r0
+200000ce: df23    SYSc 23
+200000d0: 2003    MOVi 03 r0
+200000d2: df23    SYSc 23
+200000d4: 2041    MOVi 41 r0
+200000d6: df23    SYSc 23
+200000d8: 2077    MOVi 77 r0
+200000da: df23    SYSc 23
+200000dc: e7fc    B    200000D8

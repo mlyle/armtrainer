@@ -1,0 +1,42 @@
+20000000: 2007    MOVi 07 r0
+20000002: 2100    MOVi 00 r1
+20000004: 2200    MOVi 00 r2
+20000006: df25    SYSc 25
+20000006: 0000                    ; ICONDATA                   
+20000008: 0000                    ; ICONDATA                   
+2000000a: 0fc0                    ; ICONDATA       ######      
+2000000c: 0840                    ; ICONDATA       #    #      
+2000000e: 1860                    ; ICONDATA      ##    ##     
+20000010: 1020                    ; ICONDATA      #      #     
+20000012: 7038                    ; ICONDATA    ###      ###   
+20000014: 4008                    ; ICONDATA    #          #   
+20000016: 4008                    ; ICONDATA    #          #   
+20000018: 7038                    ; ICONDATA    ###      ###   
+2000001a: 1020                    ; ICONDATA      #      #     
+2000001c: 1860                    ; ICONDATA      ##    ##     
+2000001e: 0840                    ; ICONDATA       #    #      
+20000020: 0fc0                    ; ICONDATA       ######      
+20000022: 0000                    ; ICONDATA                   
+20000024: 0000                    ; ICONDATA                   
+20000028: df20    SYSc 20
+2000002a: 2038    MOVi 38 r0
+2000002c: 2100    MOVi 00 r1
+2000002e: 2200    MOVi 00 r2
+20000030: df25    SYSc 25
+20000030: 0000                    ; ICONDATA                   
+20000032: 01c0                    ; ICONDATA          ###      
+20000034: 0220                    ; ICONDATA         #   #     
+20000036: 0220                    ; ICONDATA         #   #     
+20000038: 01c0                    ; ICONDATA          ###      
+2000003a: 0080                    ; ICONDATA           #       
+2000003c: 0080                    ; ICONDATA           #       
+2000003e: 0080                    ; ICONDATA           #       
+20000040: 0ff0                    ; ICONDATA       ########    
+20000042: 0140                    ; ICONDATA          # #      
+20000044: 0220                    ; ICONDATA         #   #     
+20000046: 0410                    ; ICONDATA        #     #    
+20000048: 0808                    ; ICONDATA       #       #   
+2000004a: 0000                    ; ICONDATA                   
+2000004c: 0000                    ; ICONDATA                   
+2000004e: 0000                    ; ICONDATA                   
+20000052: e7d8    B    20000006

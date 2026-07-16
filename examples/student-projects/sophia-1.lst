@@ -1,0 +1,22 @@
+20000000: 20ff    MOVi FF r0
+20000002: 2100    MOVi 00 r1
+20000004: 2200    MOVi 00 r2
+20000006: df25    SYSc 25
+20000006: 0000                    ; ICONDATA                   
+20000008: 0480                    ; ICONDATA        #  #       
+2000000a: 0480                    ; ICONDATA        #  #       
+2000000c: 0480                    ; ICONDATA        #  #       
+2000000e: 0480                    ; ICONDATA        #  #       
+20000010: 0000                    ; ICONDATA                   
+20000012: 0000                    ; ICONDATA                   
+20000014: 2040                    ; ICONDATA     #      #      
+20000016: 1080                    ; ICONDATA      #    #       
+20000018: 0f00                    ; ICONDATA       ####        
+2000001a: 0000                    ; ICONDATA                   
+2000001c: 0000                    ; ICONDATA                   
+2000001e: 0000                    ; ICONDATA                   
+20000020: 0000                    ; ICONDATA                   
+20000022: 0000                    ; ICONDATA                   
+20000024: 0000                    ; ICONDATA                   
+20000028: 3101    ADDi r1 01 r1
+2000002a: e7ec    B    20000006

@@ -1,0 +1,47 @@
+20000000: df20    SYSc 20
+20000002: 2335    MOVi 35 r3
+20000004: 24a0    MOVi A0 r4
+20000006: 20ff    MOVi FF r0
+20000008: 3101    ADDi r1 01 r1
+2000000a: 3201    ADDi r2 01 r2
+2000000c: 1acd    SUBr r3 r1 r5
+2000000e: df20    SYSc 20
+20000010: df25    SYSc 25
+20000010: c7e3                    ; ICONDATA   ##   ######   ##
+20000012: 9819                    ; ICONDATA   #  ##      ##  #
+20000014: 30c4                    ; ICONDATA     ##    ##   #  
+20000016: 7822                    ; ICONDATA    ####     #   # 
+20000018: 5c82                    ; ICONDATA    # ###  #     # 
+2000001a: 8e09                    ; ICONDATA   #   ###     #  #
+2000001c: 8705                    ; ICONDATA   #    ###     # #
+2000001e: 8395                    ; ICONDATA   #     ###  # # #
+20000020: 81c1                    ; ICONDATA   #      ###     #
+20000022: 80e1                    ; ICONDATA   #       ###    #
+20000024: 8071                    ; ICONDATA   #        ###   #
+20000026: 403a                    ; ICONDATA    #        ### # 
+20000028: 401e                    ; ICONDATA    #         #### 
+2000002a: 200c                    ; ICONDATA     #         ##  
+2000002c: 9819                    ; ICONDATA   #  ##      ##  #
+2000002e: c7e3                    ; ICONDATA   ##   ######   ##
+20000032: d1e9    BNZ  20000008
+20000034: 3101    ADDi r1 01 r1
+20000036: 3a01    SUBi r2 01 r2
+20000038: df20    SYSc 20
+2000003a: df25    SYSc 25
+2000003a: c7e3                    ; ICONDATA   ##   ######   ##
+2000003c: 9819                    ; ICONDATA   #  ##      ##  #
+2000003e: 30c4                    ; ICONDATA     ##    ##   #  
+20000040: 7822                    ; ICONDATA    ####     #   # 
+20000042: 5c82                    ; ICONDATA    # ###  #     # 
+20000044: 8e09                    ; ICONDATA   #   ###     #  #
+20000046: 8705                    ; ICONDATA   #    ###     # #
+20000048: 8395                    ; ICONDATA   #     ###  # # #
+2000004a: 81c1                    ; ICONDATA   #      ###     #
+2000004c: 80e1                    ; ICONDATA   #       ###    #
+2000004e: 8071                    ; ICONDATA   #        ###   #
+20000050: 403a                    ; ICONDATA    #        ### # 
+20000052: 401e                    ; ICONDATA    #         #### 
+20000054: 200c                    ; ICONDATA     #         ##  
+20000056: 9819                    ; ICONDATA   #  ##      ##  #
+20000058: c7e3                    ; ICONDATA   ##   ######   ##
+2000005c: d1ea    BNZ  20000034

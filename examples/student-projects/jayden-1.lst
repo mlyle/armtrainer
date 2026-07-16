@@ -1,0 +1,66 @@
+20000000: 20ff    MOVi FF r0
+20000002: df25    SYSc 25
+20000002: 0000                    ; ICONDATA                   
+20000004: 0000                    ; ICONDATA                   
+20000006: 0000                    ; ICONDATA                   
+20000008: 0000                    ; ICONDATA                   
+2000000a: 0000                    ; ICONDATA                   
+2000000c: 0000                    ; ICONDATA                   
+2000000e: 0000                    ; ICONDATA                   
+20000010: 0060                    ; ICONDATA            ##     
+20000012: 0070                    ; ICONDATA            ###    
+20000014: 0078                    ; ICONDATA            ####   
+20000016: 009c                    ; ICONDATA           #  ###  
+20000018: 010e                    ; ICONDATA          #    ### 
+2000001a: 0207                    ; ICONDATA         #      ###
+2000001c: 0403                    ; ICONDATA        #        ##
+2000001e: 0800                    ; ICONDATA       #           
+20000020: 1c00                    ; ICONDATA      ###          
+20000024: 2009    MOVi 09 r0
+20000026: df18    SYSc 18
+20000028: 2108    MOVi 08 r1
+2000002a: 4281    CMPr r0 r1
+2000002c: d1fa    BNZ  20000024
+2000002e: 20ff    MOVi FF r0
+20000030: df25    SYSc 25
+20000030: 0000                    ; ICONDATA                   
+20000032: 0000                    ; ICONDATA                   
+20000034: 0000                    ; ICONDATA                   
+20000036: 0000                    ; ICONDATA                   
+20000038: 0000                    ; ICONDATA                   
+2000003a: 0000                    ; ICONDATA                   
+2000003c: 0000                    ; ICONDATA                   
+2000003e: 0000                    ; ICONDATA                   
+20000040: 0000                    ; ICONDATA                   
+20000042: 0000                    ; ICONDATA                   
+20000044: 0000                    ; ICONDATA                   
+20000046: 0000                    ; ICONDATA                   
+20000048: 0000                    ; ICONDATA                   
+2000004a: 0000                    ; ICONDATA                   
+2000004c: 0000                    ; ICONDATA                   
+2000004e: 0000                    ; ICONDATA                   
+20000052: 2000    MOVi 00 r0
+20000054: 2100    MOVi 00 r1
+20000056: 20ff    MOVi FF r0
+20000058: df18    SYSc 18
+2000005a: 21fe    MOVi FE r1
+2000005c: 4281    CMPr r0 r1
+2000005e: d1fa    BNZ  20000056
+20000060: 20ff    MOVi FF r0
+20000062: df25    SYSc 25
+20000062: 0000                    ; ICONDATA                   
+20000064: 0000                    ; ICONDATA                   
+20000066: 0000                    ; ICONDATA                   
+20000068: 03c0                    ; ICONDATA         ####      
+2000006a: 07e0                    ; ICONDATA        ######     
+2000006c: 8ff0                    ; ICONDATA   #   ########    
+2000006e: dff8                    ; ICONDATA   ## ##########   
+20000070: fffc                    ; ICONDATA   ##############  
+20000072: fff8                    ; ICONDATA   #############   
+20000074: dff0                    ; ICONDATA   ## #########    
+20000076: 8fe0                    ; ICONDATA   #   #######     
+20000078: 07c0                    ; ICONDATA        #####      
+2000007a: 0000                    ; ICONDATA                   
+2000007c: 0000                    ; ICONDATA                   
+2000007e: 0000                    ; ICONDATA                   
+20000080: 0000                    ; ICONDATA                   

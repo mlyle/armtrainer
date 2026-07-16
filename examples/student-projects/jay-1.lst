@@ -1,0 +1,146 @@
+20000000: 20ff    MOVi FF r0
+20000002: 2100    MOVi 00 r1
+20000004: 2200    MOVi 00 r2
+20000006: df25    SYSc 25
+20000006: 03e0                    ; ICONDATA         #####     
+20000008: 0410                    ; ICONDATA        #     #    
+2000000a: 0550                    ; ICONDATA        # # # #    
+2000000c: 0550                    ; ICONDATA        # # # #    
+2000000e: 0410                    ; ICONDATA        #     #    
+20000010: 03e0                    ; ICONDATA         #####     
+20000012: 0080                    ; ICONDATA           #       
+20000014: 01c0                    ; ICONDATA          ###      
+20000016: 02a0                    ; ICONDATA         # # #     
+20000018: 0490                    ; ICONDATA        #  #  #    
+2000001a: 0080                    ; ICONDATA           #       
+2000001c: 0140                    ; ICONDATA          # #      
+2000001e: 0220                    ; ICONDATA         #   #     
+20000020: 0410                    ; ICONDATA        #     #    
+20000022: 0e38                    ; ICONDATA       ###   ###   
+20000024: 0000                    ; ICONDATA                   
+20000028: 2044    MOVi 44 r0
+2000002a: df23    SYSc 23
+2000002c: 2069    MOVi 69 r0
+2000002e: df23    SYSc 23
+20000030: 2064    MOVi 64 r0
+20000032: df23    SYSc 23
+20000034: 2020    MOVi 20 r0
+20000036: df23    SYSc 23
+20000038: 2079    MOVi 79 r0
+2000003a: df23    SYSc 23
+2000003c: 206f    MOVi 6F r0
+2000003e: df23    SYSc 23
+20000040: 2075    MOVi 75 r0
+20000042: df23    SYSc 23
+20000044: 2020    MOVi 20 r0
+20000046: df23    SYSc 23
+20000048: 206b    MOVi 6B r0
+2000004a: df23    SYSc 23
+2000004c: 206e    MOVi 6E r0
+2000004e: df23    SYSc 23
+20000050: 206f    MOVi 6F r0
+20000052: df23    SYSc 23
+20000054: 2077    MOVi 77 r0
+20000056: df23    SYSc 23
+20000058: 2020    MOVi 20 r0
+2000005a: df23    SYSc 23
+2000005c: 2074    MOVi 74 r0
+2000005e: df23    SYSc 23
+20000060: 2068    MOVi 68 r0
+20000062: df23    SYSc 23
+20000064: 2061    MOVi 61 r0
+20000066: df23    SYSc 23
+20000068: 2074    MOVi 74 r0
+2000006a: df23    SYSc 23
+2000006c: 2020    MOVi 20 r0
+2000006e: df20    SYSc 20
+20000070: 20ff    MOVi FF r0
+20000072: 2100    MOVi 00 r1
+20000074: 2200    MOVi 00 r2
+20000076: df25    SYSc 25
+20000076: 03e0                    ; ICONDATA         #####     
+20000078: 0550                    ; ICONDATA        # # # #    
+2000007a: 0550                    ; ICONDATA        # # # #    
+2000007c: 0410                    ; ICONDATA        #     #    
+2000007e: 07f0                    ; ICONDATA        #######    
+20000080: 0410                    ; ICONDATA        #     #    
+20000082: 13f4                    ; ICONDATA      #  ###### #  
+20000084: 0888                    ; ICONDATA       #   #   #   
+20000086: 0490                    ; ICONDATA        #  #  #    
+20000088: 03f0                    ; ICONDATA         ######    
+2000008a: 0080                    ; ICONDATA           #       
+2000008c: 0080                    ; ICONDATA           #       
+2000008e: 0140                    ; ICONDATA          # #      
+20000090: 0220                    ; ICONDATA         #   #     
+20000092: 0410                    ; ICONDATA        #     #    
+20000094: 0e38                    ; ICONDATA       ###   ###   
+20000098: 2074    MOVi 74 r0
+2000009a: df23    SYSc 23
+2000009c: 2068    MOVi 68 r0
+2000009e: df23    SYSc 23
+200000a0: 2065    MOVi 65 r0
+200000a2: df23    SYSc 23
+200000a4: 2020    MOVi 20 r0
+200000a6: df23    SYSc 23
+200000a8: 2066    MOVi 66 r0
+200000aa: df23    SYSc 23
+200000ac: 2069    MOVi 69 r0
+200000ae: df23    SYSc 23
+200000b0: 2072    MOVi 72 r0
+200000b2: df23    SYSc 23
+200000b4: 2073    MOVi 73 r0
+200000b6: df23    SYSc 23
+200000b8: 2074    MOVi 74 r0
+200000ba: df23    SYSc 23
+200000bc: 2020    MOVi 20 r0
+200000be: df23    SYSc 23
+200000c0: 2063    MOVi 63 r0
+200000c2: df23    SYSc 23
+200000c4: 206f    MOVi 6F r0
+200000c6: df23    SYSc 23
+200000c8: 206d    MOVi 6D r0
+200000ca: df23    SYSc 23
+200000cc: 2070    MOVi 70 r0
+200000ce: df23    SYSc 23
+200000d0: 2075    MOVi 75 r0
+200000d2: df23    SYSc 23
+200000d4: 2074    MOVi 74 r0
+200000d6: df23    SYSc 23
+200000d8: 2065    MOVi 65 r0
+200000da: df23    SYSc 23
+200000dc: 2072    MOVi 72 r0
+200000de: df23    SYSc 23
+200000e0: 2020    MOVi 20 r0
+200000e2: df23    SYSc 23
+200000e4: 2077    MOVi 77 r0
+200000e6: df23    SYSc 23
+200000e8: 2061    MOVi 61 r0
+200000ea: df23    SYSc 23
+200000ec: 2073    MOVi 73 r0
+200000ee: df23    SYSc 23
+200000f0: 2020    MOVi 20 r0
+200000f2: df23    SYSc 23
+200000f4: 2074    MOVi 74 r0
+200000f6: df23    SYSc 23
+200000f8: 2068    MOVi 68 r0
+200000fa: df23    SYSc 23
+200000fc: 2065    MOVi 65 r0
+200000fe: df23    SYSc 23
+20000100: 2020    MOVi 20 r0
+20000102: df23    SYSc 23
+20000104: 2045    MOVi 45 r0
+20000106: df23    SYSc 23
+20000108: 204e    MOVi 4E r0
+2000010a: df23    SYSc 23
+2000010c: 2049    MOVi 49 r0
+2000010e: df23    SYSc 23
+20000110: 2041    MOVi 41 r0
+20000112: df23    SYSc 23
+20000114: 2043    MOVi 43 r0
+20000116: df23    SYSc 23
+20000118: 203f    MOVi 3F r0
+2000011a: df23    SYSc 23
+2000011c: 200e    MOVi 0E r0
+2000011e: df11    SYSc 11
+20000120: df20    SYSc 20
+20000122: e76d    B    20000000

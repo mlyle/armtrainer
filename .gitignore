@@ -1,12 +1,27 @@
-# KiCad temporary and output files
-/hardware/*.bak
-/hardware/*.csv
-/hardware/*.kicad_pcb-bak
-/hardware/*.net
-/hardware/*.xml
-/hardware/*.xsl
-/hardware/output
+# OS and editor files
+.DS_Store
+.*.swp
 
-# Build cruft
+# Local archives
+/arm-manual.zip
+/arm-manual/condcodesummary-eps-converted-to.pdf
+
+# Build output
 /build/
-/tools/
+/disasmthumb
+/makeit
+
+# Scratch files
+/src/before
+
+# KiCad temporary, backup, and generated files
+/hw/*-backups/
+/hw/**/*.bak
+/hw/**/*.kicad_pcb-bak
+/hw/**/*.kicad_prl
+/hw/**/*-backups/
+/hw/**/fp-info-cache
+/hw/plate/plategerbers/
+/hw/*.step
+/hw/*.xml
+/hw/~*.lck

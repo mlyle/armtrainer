@@ -14,6 +14,18 @@ ARM-Thumb machine code was a fairly ideal architecture for students to learn, be
 * It has a reasonable number of general purpose registers.
 * A fixed-length, relatively simple encoding avoids unnecessary complexity.
 
+## Repository Layout
+
+* `src/` and `inc/` contain the trainer firmware.
+* `hw/` contains the KiCad hardware designs and manufacturing outputs.
+* `arm-manual/` contains the student manual sources.
+* `examples/` contains programs captured from trainers during class.
+* `tools/` contains host-side conversion, disassembly, capture, and printing tools.
+
+Run `make tools` to build the host-side utilities in `build/tools/`. The classroom
+scripts should be run from any directory; they locate the repository and examples
+automatically.
+
 ## Example Program
 
 By a student, Robin K:
